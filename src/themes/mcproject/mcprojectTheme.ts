@@ -57,5 +57,15 @@ export const mcprojectTheme = defineTheme({
     '--mc-accent-techno': '#4FD1E0',
     '--mc-accent-magic': '#A78BFA',
     '--mc-accent-survival': '#7CC96B',
+    // «Стекло и свет»: полупрозрачные поверхности, тонкие светлые линии, скругления.
+    '--mc-night': '#0B0D12',
+    '--mc-glass': 'rgba(255, 255, 255, 0.045)',
+    '--mc-glass-2': 'rgba(255, 255, 255, 0.08)',
+    '--mc-line': 'rgba(255, 255, 255, 0.10)',
+    '--mc-line-2': 'rgba(255, 255, 255, 0.2)',
+    '--mc-r-xl': '28px',
+    '--mc-r-card': '20px',
+    '--mc-r-tile': '14px',
+    '--mc-r-btn': '12px',
   },
 });

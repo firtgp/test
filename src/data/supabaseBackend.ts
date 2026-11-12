@@ -3,11 +3,12 @@ import type {Backend, GalleryMeta} from './backend';
 import {IMAGE_MAX_BYTES, IMAGE_TYPES} from './backend';
 import {SETTINGS_KEY, seedSettings} from './seed';
 import {
-  AppError, contentSchemas, siteSettingsSchema,
+  AppError, avatarStyleSchema, contentSchemas, siteSettingsSchema,
   type Account, type GalleryItem, type Mod, type Modpack, type NewsItem, type RulesVersion,
   type Server, type ServerStatus, type ServerView, type StaffRole,
 } from './types';
 
+const AVATAR_KEY = 'mcsite-avatar-';
 const DB_CODES = [
   'nick_taken', 'nick_invalid', 'nick_cooldown', 'forbidden', 'not_authenticated',
   'user_not_found', 'last_owner', 'role_must_be_global',
@@ -133,6 +134,7 @@ export function createSupabaseBackend(url: string, anonKey: string): Backend {
         mc_uuid: p.mc_uuid,
         selected_server_id: p.selected_server_id,
         nick_changed_at: p.nick_changed_at,
+        avatar_style: avatarStyleSchema.catch('wanderer').parse(localStorage.getItem(`${AVATAR_KEY}${user.id}`)),
         roles: (check(roles) ?? []) as Account['roles'],
       };
     },
@@ -290,6 +292,34 @@ export function createSupabaseBackend(url: string, anonKey: string): Backend {
         target: r.target,
         created_at: r.created_at,
       }));
+    },
+
+    // ---------- кабинет ----------
+    // Серверной части магазина и баланса в этой версии нет: интерфейс показывает это прямо.
+    shop: false,
+    // Образ персонажа — настройка внешнего вида сайта: хранится в этом браузере.
+    async setAvatarStyle(style) {
+      const {data} = await db.auth.getSession();
+      if (!data.session) throw new AppError('not_authenticated');
+      localStorage.setItem(`${AVATAR_KEY}${data.session.user.id}`, avatarStyleSchema.parse(style));
+    },
+    async listProducts() {
+      return [];
+    },
+    async getWallet() {
+      return 0;
+    },
+    async listLedger() {
+      return [];
+    },
+    async listOrders() {
+      return [];
+    },
+    async getPrivilege() {
+      return null;
+    },
+    async purchase() {
+      throw new AppError('shop_unavailable');
     },
   };
 }

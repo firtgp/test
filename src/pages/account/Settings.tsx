@@ -1,5 +1,4 @@
 import {useEffect, useState} from 'react';
-import {useNavigate} from 'react-router';
 import {useQuery} from '@tanstack/react-query';
 import {AlertDialog} from '@astryxdesign/core/AlertDialog';
 import {Banner} from '@astryxdesign/core/Banner';
@@ -12,17 +11,18 @@ import {Selector} from '@astryxdesign/core/Selector';
 import {Text} from '@astryxdesign/core/Text';
 import {TextInput} from '@astryxdesign/core/TextInput';
 import {VStack} from '@astryxdesign/core/VStack';
-import {isStaffAdmin, keys, useAccount, useInvalidate, useNotify, useServers, useSettings} from '../app/hooks';
-import {formatDateTime} from '../app/format';
-import {backend} from '../data';
-import {STAFF_ROLE_LABEL, errorText, nickSchema, passwordSchema, type Account} from '../data/types';
-import {CtaLink, startPath} from '../components/CtaLink';
-import {Async, Page} from '../components/Page';
-import {packLine} from '../components/ServerCard';
+import {keys, useInvalidate, useNotify, useServers, useSettings} from '../../app/hooks';
+import {formatDateTime} from '../../app/format';
+import {backend} from '../../data';
+import {STAFF_ROLE_LABEL, errorText, nickSchema, passwordSchema, type Account} from '../../data/types';
+import {CtaLink, startPath} from '../../components/CtaLink';
+import {Async} from '../../components/Page';
+import {packLine} from '../../components/ServerCard';
+import {SectionTitle, useCabinet} from './shared';
 
 function Section({title, children}: {title: string; children: React.ReactNode}) {
   return (
-    <VStack gap={4} as="section" className="mc-tile">
+    <VStack gap={4} as="section" className="mc-panel">
       <Heading level={2}>{title}</Heading>
       {children}
     </VStack>
@@ -129,9 +129,9 @@ function PasswordForm() {
       }}>
       <VStack gap={3} hAlign="start">
         {error ? (
-          <div role="alert" style={{width: '100%'}}>
+          <span role="alert" className="mc-block">
             <Banner status="error" title={error} />
-          </div>
+          </span>
         ) : null}
         <TextInput label="Текущий пароль" type="password" value={current} onChange={setCurrent} autoComplete="current-password" width="100%" />
         <TextInput
@@ -203,110 +203,75 @@ function Sessions() {
   );
 }
 
-export function AccountPage() {
-  const account = useAccount();
+/** Настройки: профиль, сервер по умолчанию, ник, пароль и активные сессии. */
+export function SettingsPage() {
+  const {account: a} = useCabinet();
   const servers = useServers().data ?? [];
-  const navigate = useNavigate();
   const notify = useNotify();
   const invalidate = useInvalidate();
-  const a = account.data;
-
-  useEffect(() => {
-    if (account.isSuccess && !a) navigate('/login', {replace: true});
-  }, [account.isSuccess, a, navigate]);
-
-  const selected = servers.find(s => s.id === a?.selected_server_id) ?? null;
+  const selected = servers.find(s => s.id === a.selected_server_id) ?? null;
 
   return (
-    <Page title="Кабинет" width="text">
-      <Async query={account}>
-        {() =>
-          a ? (
-            <VStack gap={4}>
-              {isStaffAdmin(a) ? (
-                <Banner
-                  status="info"
-                  title="У вас есть доступ к админке"
-                  endContent={<Button label="Открыть админку" href="/admin" variant="secondary" />}
-                />
-              ) : null}
+    <>
+      <SectionTitle title="Настройки" lead="Профиль, сервер по умолчанию, ник, пароль и активные входы." />
+      <span className="mc-settings">
+        <Section title="Профиль">
+          <MetadataList>
+            <MetadataListItem label="Ник">
+              <span className="mc-wrap">{a.nick}</span>
+            </MetadataListItem>
+            <MetadataListItem label="Почта">
+              <span className="mc-wrap">
+                {a.email} {a.email_confirmed ? '(подтверждена)' : '(не подтверждена)'}
+              </span>
+            </MetadataListItem>
+            <MetadataListItem label="UUID игрока">
+              <span className="mc-mono">{a.mc_uuid}</span>
+            </MetadataListItem>
+            {a.roles.length > 0 ? (
+              <MetadataListItem label="Роли">
+                {a.roles
+                  .map(r => `${STAFF_ROLE_LABEL[r.role]}${r.server_id ? ` (${servers.find(s => s.id === r.server_id)?.name ?? 'сервер'})` : ''}`)
+                  .join(', ')}
+              </MetadataListItem>
+            ) : null}
+          </MetadataList>
+        </Section>
 
-              <Section title="Профиль">
-                <MetadataList>
-                  <MetadataListItem label="Ник">
-                    <span className="mc-wrap">{a.nick}</span>
-                  </MetadataListItem>
-                  <MetadataListItem label="Почта">
-                    <span className="mc-wrap">
-                      {a.email} {a.email_confirmed ? '(подтверждена)' : '(не подтверждена)'}
-                    </span>
-                  </MetadataListItem>
-                  <MetadataListItem label="UUID игрока">
-                    <span className="mc-mono">{a.mc_uuid}</span>
-                  </MetadataListItem>
-                  {a.roles.length > 0 ? (
-                    <MetadataListItem label="Роли">
-                      {a.roles
-                        .map(r => `${STAFF_ROLE_LABEL[r.role]}${r.server_id ? ` (${servers.find(s => s.id === r.server_id)?.name ?? 'сервер'})` : ''}`)
-                        .join(', ')}
-                    </MetadataListItem>
-                  ) : null}
-                </MetadataList>
-              </Section>
+        <Section title="Мой сервер">
+          <Selector
+            label="Сервер по умолчанию"
+            placeholder="Выберите сервер"
+            description="Инструкция «Как начать» откроется сразу для него."
+            value={a.selected_server_id ?? ''}
+            options={servers.map(s => ({value: s.id, label: `${s.name} — ${packLine(s)}`}))}
+            onChange={async id => {
+              try {
+                await backend.setSelectedServer(id || null);
+                await invalidate('account');
+                notify.ok('Сервер сохранён');
+              } catch (e) {
+                notify.fail(e);
+              }
+            }}
+          />
+          <HStack>
+            <CtaLink to={startPath(selected?.slug)} size="md">
+              {selected ? `Играть на «${selected.name}»` : 'Как начать играть'}
+            </CtaLink>
+          </HStack>
+        </Section>
 
-              <Section title="Мой сервер">
-                <Selector
-                  label="Сервер по умолчанию"
-                  placeholder="Выберите сервер"
-                  description="Инструкция «Как начать» откроется сразу для него."
-                  value={a.selected_server_id ?? ''}
-                  options={servers.map(s => ({value: s.id, label: `${s.name} — ${packLine(s)}`}))}
-                  onChange={async id => {
-                    try {
-                      await backend.setSelectedServer(id || null);
-                      await invalidate('account');
-                      notify.ok('Сервер сохранён');
-                    } catch (e) {
-                      notify.fail(e);
-                    }
-                  }}
-                />
-                <HStack>
-                  <CtaLink to={startPath(selected?.slug)} size="md">
-                    {selected ? `Играть на «${selected.name}»` : 'Как начать играть'}
-                  </CtaLink>
-                </HStack>
-              </Section>
-
-              <Section title="Ник">
-                <NickForm account={a} />
-              </Section>
-              <Section title="Пароль">
-                <PasswordForm />
-              </Section>
-              <Section title="Активные сессии">
-                <Sessions />
-              </Section>
-
-              <HStack>
-                <Button
-                  label="Выйти из аккаунта"
-                  variant="secondary"
-                  clickAction={async () => {
-                    try {
-                      await backend.signOut();
-                      await invalidate('account');
-                      navigate('/');
-                    } catch (e) {
-                      notify.fail(e);
-                    }
-                  }}
-                />
-              </HStack>
-            </VStack>
-          ) : null
-        }
-      </Async>
-    </Page>
+        <Section title="Ник">
+          <NickForm account={a} />
+        </Section>
+        <Section title="Пароль">
+          <PasswordForm />
+        </Section>
+        <Section title="Активные сессии">
+          <Sessions />
+        </Section>
+      </span>
+    </>
   );
 }

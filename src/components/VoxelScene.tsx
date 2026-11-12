@@ -1,6 +1,6 @@
 import {useEffect, useRef, useState} from 'react';
 import type {Shot} from '../scenes/engine';
-import {SKY, type ScenePreset, type WorldId} from '../scenes/worlds';
+import {SKY, type ScenePreset, type WorldId} from '../scenes/meta';
 
 // Движок с three.js грузится отдельным файлом при первом обращении.
 const loadEngine = () => import('../scenes/engine');
@@ -10,10 +10,17 @@ const loadEngine = () => import('../scenes/engine');
  * Без WebGL остаётся градиент неба. Сцена не рисуется вне экрана и в скрытой вкладке;
  * при reduced motion — один кадр.
  */
-export function VoxelScene({preset, className}: {preset: ScenePreset; className?: string}) {
+export function VoxelScene({
+  world: worldId, className, stage = false,
+}: {
+  world: WorldId;
+  className?: string;
+  /** Режим сцены персонажа: без неба, с полным оборотом и поворотом перетаскиванием. */
+  stage?: boolean;
+}) {
   const hostRef = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
-  const sky = SKY[preset];
+  const sky = !stage && worldId in SKY ? SKY[worldId as ScenePreset] : null;
 
   useEffect(() => {
     const host = hostRef.current;
@@ -26,26 +33,42 @@ export function VoxelScene({preset, className}: {preset: ScenePreset; className?
         if (disposed) return;
         let renderer: ReturnType<typeof engine.createRenderer>;
         try {
-          renderer = engine.createRenderer();
+          // Мягкие тени в живой сцене считаются в каждом кадре. Три мира первого экрана на телефоне
+          // и на слабом процессоре идут без них; сцена персонажа одна, ей тени оставлены.
+          const light = window.innerWidth < 1024 || (navigator.hardwareConcurrency ?? 4) < 6;
+          renderer = engine.createRenderer({shadows: stage || !light});
         } catch {
           return; // WebGL недоступен: остаётся градиент.
         }
-        const world = engine.buildWorld(preset);
+        const world = engine.buildWorld(worldId);
         const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         const canvas = renderer.domElement;
         canvas.setAttribute('aria-hidden', 'true');
         host.appendChild(canvas);
         const built = engine.createWorldScene(world);
+        renderer.shadowMap.needsUpdate = true;
 
         const camera = engine.createCamera();
         let distance = 80;
+        // Поворот сцены персонажа: сам медленно вращается, перетаскивание и стрелки поворачивают вручную.
+        let spin = 0.5;
+        let last = performance.now();
+        let dragging = false;
+        let idleUntil = 0;
         const draw = (t: number) => {
-          engine.aimCamera(camera, world, distance, {
-            angle: 0.55 + (reduce ? 0 : Math.sin(t / 9000) * 0.28),
-            lift: 0.2 + (reduce ? 0 : Math.sin(t / 13000) * 0.04),
-            // Мир стоит в верхней части кадра: нижнюю треть панели занимает подпись.
-            drop: 0.42,
-          });
+          if (stage) {
+            const dt = Math.min(64, t - last);
+            last = t;
+            if (!reduce && !dragging && t > idleUntil) spin += dt * 0.00035;
+            engine.aimCamera(camera, world, distance, {angle: spin, lift: 0.1, drop: 0.04});
+          } else {
+            engine.aimCamera(camera, world, distance, {
+              angle: 0.55 + (reduce ? 0 : Math.sin(t / 9000) * 0.28),
+              lift: 0.2 + (reduce ? 0 : Math.sin(t / 13000) * 0.04),
+              // Мир стоит в верхней части кадра: нижнюю треть панели занимает подпись.
+              drop: 0.42,
+            });
+          }
           renderer.render(built.scene, camera);
         };
         const resize = () => {
@@ -55,7 +78,7 @@ export function VoxelScene({preset, className}: {preset: ScenePreset; className?
           renderer.setSize(w, h, false);
           camera.aspect = w / h;
           // Мир вписывается по высоте; по ширине допускается обрезка краёв острова.
-          distance = engine.fitDistance(camera, world, 1.45, 1.02);
+          distance = stage ? engine.fitDistance(camera, world, 1.06, 1.06) : engine.fitDistance(camera, world, 1.45, 1.02);
           camera.updateProjectionMatrix();
           draw(performance.now());
         };
@@ -80,6 +103,42 @@ export function VoxelScene({preset, className}: {preset: ScenePreset; className?
         const ro = new ResizeObserver(resize);
         ro.observe(host);
         document.addEventListener('visibilitychange', update);
+
+        // Ручной поворот: указатель и клавиатура. При reduced motion кадр перерисовывается по событию.
+        let startX = 0;
+        let startSpin = 0;
+        const redraw = () => {
+          if (!frame) draw(performance.now());
+        };
+        const onDown = (e: PointerEvent) => {
+          dragging = true;
+          startX = e.clientX;
+          startSpin = spin;
+          host.setPointerCapture(e.pointerId);
+        };
+        const onMove = (e: PointerEvent) => {
+          if (!dragging) return;
+          spin = startSpin + (e.clientX - startX) * 0.012;
+          redraw();
+        };
+        const onUp = () => {
+          dragging = false;
+          idleUntil = performance.now() + 2500;
+        };
+        const onKey = (e: KeyboardEvent) => {
+          if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+          e.preventDefault();
+          spin += e.key === 'ArrowLeft' ? -0.3 : 0.3;
+          idleUntil = performance.now() + 2500;
+          redraw();
+        };
+        if (stage) {
+          host.addEventListener('pointerdown', onDown);
+          host.addEventListener('pointermove', onMove);
+          host.addEventListener('pointerup', onUp);
+          host.addEventListener('pointercancel', onUp);
+          host.addEventListener('keydown', onKey);
+        }
         resize();
         setReady(true);
 
@@ -88,6 +147,11 @@ export function VoxelScene({preset, className}: {preset: ScenePreset; className?
           io.disconnect();
           ro.disconnect();
           document.removeEventListener('visibilitychange', update);
+          host.removeEventListener('pointerdown', onDown);
+          host.removeEventListener('pointermove', onMove);
+          host.removeEventListener('pointerup', onUp);
+          host.removeEventListener('pointercancel', onUp);
+          host.removeEventListener('keydown', onKey);
           built.dispose();
           renderer.dispose();
           canvas.remove();
@@ -99,16 +163,25 @@ export function VoxelScene({preset, className}: {preset: ScenePreset; className?
       disposed = true;
       cleanup();
     };
-  }, [preset]);
+  }, [worldId, stage]);
 
   return (
     <div
       ref={hostRef}
-      className={`mc-scene${ready ? ' mc-scene--ready' : ''}${className ? ` ${className}` : ''}`}
-      style={{background: `linear-gradient(180deg, ${sky[0]} 0%, ${sky[1]} 52%, ${sky[2]} 100%)`}}
-      aria-hidden="true"
+      className={`mc-scene${ready ? ' mc-scene--ready' : ''}${stage ? ' mc-scene--stage' : ''}${className ? ` ${className}` : ''}`}
+      style={sky ? {background: `linear-gradient(180deg, ${sky[0]} 0%, ${sky[1]} 52%, ${sky[2]} 100%)`} : undefined}
+      {...(stage
+        ? {tabIndex: 0, role: 'img', 'aria-label': 'Трёхмерная модель персонажа. Перетащите или нажимайте стрелки влево и вправо, чтобы повернуть.'}
+        : {'aria-hidden': true})}
     />
   );
+}
+
+/** Готовит постер заранее. Ключ кеша тот же, что у WorldPoster с такими же параметрами. */
+export function preloadPoster(world: WorldId, width: number, height: number, shot: Shot = {}) {
+  loadEngine()
+    .then(engine => engine.renderPoster(world, width, height, JSON.parse(JSON.stringify(shot)), true))
+    .catch(() => null);
 }
 
 /**

@@ -7,16 +7,22 @@ import {IMAGE_TYPES} from './backend';
 import {
   SRV_MAGIC, SRV_SURV, SRV_TECH, seedMods, seedModpacks, seedNews, seedRules, seedServers, seedSettings,
 } from './seed';
+import {seedProducts} from './shopSeed';
 import {
-  AppError, NICK_RE, contentSchemas, siteSettingsSchema,
-  type Account, type AuditEntry, type ContentTable, type GalleryItem, type Mod, type Modpack,
-  type NewsItem, type RulesVersion, type Server, type ServerStatus, type ServerView,
-  type SiteSettings, type StaffEntry, type StaffRole,
+  AppError, NICK_RE, avatarStyleSchema, contentSchemas, siteSettingsSchema,
+  type Account, type ActivePrivilege, type AuditEntry, type ContentTable, type GalleryItem, type LedgerEntry,
+  type Mod, type Modpack, type NewsItem, type Order, type Product, type RulesVersion, type Server,
+  type ServerStatus, type ServerView, type SiteSettings, type StaffEntry, type StaffRole,
 } from './types';
 
 const STORE_KEY = 'mcsite-demo-v1';
 const DEMO_IMAGE_MAX = 1024 * 1024;
 export const DEMO_OWNER = {email: 'owner@example.org', password: 'demo-owner-pass', nick: 'DemoOwner'};
+/** Готовый игрок: кабинет, баланс и магазин видны сразу, без регистрации. */
+export const DEMO_PLAYER = {email: 'player@example.org', password: 'demo-player-pass', nick: 'DemoPlayer'};
+const DEMO_START_BALANCE = 1200;
+export const DEMO_TOPUP_MIN = 50;
+export const DEMO_TOPUP_MAX = 50_000;
 
 interface DemoUser {
   id: string;
@@ -29,7 +35,11 @@ interface DemoUser {
   selected_server_id: string | null;
   nick_changed_at: string | null;
   failed: number[];
+  avatar_style?: Account['avatar_style'];
 }
+interface DemoLedger extends LedgerEntry {user_id: string}
+interface DemoOrder extends Order {user_id: string; key: string}
+interface DemoPrivilege extends ActivePrivilege {user_id: string}
 interface DemoToken {token: string; kind: 'confirm' | 'reset'; user_id: string; expires: number}
 interface DemoState {
   settings: SiteSettings;
@@ -45,6 +55,10 @@ interface DemoState {
   mail: DemoMail[];
   audit: AuditEntry[];
   session: {user_id: string; id: string; created_at: string} | null;
+  products: Product[];
+  ledger: DemoLedger[];
+  orders: DemoOrder[];
+  privileges: DemoPrivilege[];
 }
 
 const uuid = () => crypto.randomUUID();
@@ -73,6 +87,10 @@ function initial(): DemoState {
     mail: [],
     audit: [],
     session: null,
+    products: seedProducts,
+    ledger: [],
+    orders: [],
+    privileges: [],
   };
 }
 
@@ -96,6 +114,8 @@ export function createDemoBackend(): Backend {
   try {
     const raw = localStorage.getItem(STORE_KEY);
     state = raw ? {...initial(), ...(JSON.parse(raw) as DemoState)} : initial();
+    // Данные, сохранённые прежней версией сайта, дополняются новыми полями настроек.
+    state.settings = {...seedSettings, ...state.settings};
   } catch {
     state = initial();
   }
@@ -109,18 +129,35 @@ export function createDemoBackend(): Backend {
   };
   const emit = () => listeners.forEach(l => l('change'));
 
-  // Готовый владелец для входа в админку демо-режима.
-  const ready = (async () => {
-    if (state.users.some(u => u.email === DEMO_OWNER.email)) return;
-    const salt = uuid();
-    const id = uuid();
-    state.users.push({
-      id, email: DEMO_OWNER.email, nick: DEMO_OWNER.nick, mc_uuid: uuid(), salt,
-      hash: await pbkdf2(DEMO_OWNER.password, salt), email_confirmed: true,
-      selected_server_id: null, nick_changed_at: null, failed: [],
+  const balanceOf = (userId: string) => state.ledger.reduce((sum, l) => (l.user_id === userId ? sum + l.delta : sum), 0);
+  const addLedger = (userId: string, delta: number, reason: LedgerEntry['reason'], title: string) => {
+    state.ledger.unshift({
+      id: uuid(), user_id: userId, delta, reason, title, balance_after: balanceOf(userId) + delta, created_at: nowIso(),
     });
-    state.staff.push({id: uuid(), user_id: id, nick: DEMO_OWNER.nick, role: 'owner', server_id: null, created_at: nowIso()});
-    persist();
+  };
+
+  // Готовые аккаунты демо-режима: владелец для админки и игрок для кабинета.
+  const ready = (async () => {
+    let changed = false;
+    const ensure = async (who: typeof DEMO_OWNER) => {
+      if (state.users.some(u => u.email === who.email)) return null;
+      const salt = uuid();
+      const id = uuid();
+      state.users.push({
+        id, email: who.email, nick: who.nick, mc_uuid: uuid(), salt,
+        hash: await pbkdf2(who.password, salt), email_confirmed: true,
+        selected_server_id: null, nick_changed_at: null, failed: [],
+      });
+      changed = true;
+      return id;
+    };
+    const ownerId = await ensure(DEMO_OWNER);
+    if (ownerId) {
+      state.staff.push({id: uuid(), user_id: ownerId, nick: DEMO_OWNER.nick, role: 'owner', server_id: null, created_at: nowIso()});
+    }
+    const playerId = await ensure(DEMO_PLAYER);
+    if (playerId) addLedger(playerId, DEMO_START_BALANCE, 'grant', 'Стартовый демо-баланс');
+    if (changed) persist();
   })();
 
   const me = () => state.users.find(u => u.id === state.session?.user_id) ?? null;
@@ -174,9 +211,13 @@ export function createDemoBackend(): Backend {
       r.readAsDataURL(file);
     });
   const table = (name: ContentTable): {id: string}[] => state[name];
+  const publicOrder = ({user_id: _u, key: _k, ...order}: DemoOrder): Order => order;
+  const activePrivilege = (userId: string) =>
+    state.privileges.find(p => p.user_id === userId && Date.parse(p.expires_at) > Date.now()) ?? null;
 
   return {
     mode: 'demo',
+    shop: true,
 
     async getSettings() {
       return state.settings;
@@ -222,6 +263,7 @@ export function createDemoBackend(): Backend {
       return {
         id: u.id, email: u.email, email_confirmed: u.email_confirmed, nick: u.nick, mc_uuid: u.mc_uuid,
         selected_server_id: u.selected_server_id, nick_changed_at: u.nick_changed_at,
+        avatar_style: u.avatar_style ?? 'wanderer',
         roles: state.staff.filter(s => s.user_id === u.id).map(s => ({role: s.role, server_id: s.server_id})),
       };
     },
@@ -368,6 +410,7 @@ export function createDemoBackend(): Backend {
     },
     async deleteContent(name, id) {
       requireAdmin();
+      // Купленные товары остаются в истории заказов: заказ хранит своё название и цену.
       (state[name] as {id: string}[]) = table(name).filter(r => r.id !== id);
       if (name === 'modpacks') {
         state.mods = state.mods.filter(m => m.modpack_id !== id);
@@ -452,6 +495,84 @@ export function createDemoBackend(): Backend {
     async listAudit() {
       requireAdmin();
       return state.audit;
+    },
+
+    // ---------- кабинет ----------
+    async setAvatarStyle(style) {
+      const u = requireUser();
+      u.avatar_style = avatarStyleSchema.parse(style);
+      persist();
+      emit();
+    },
+    async listProducts(includeUnpublished = false) {
+      if (includeUnpublished) requireAdmin();
+      return state.products.filter(p => includeUnpublished || p.published).sort((a, b) => a.sort - b.sort);
+    },
+    async getWallet() {
+      await ready;
+      return balanceOf(requireUser().id);
+    },
+    async listLedger() {
+      const u = requireUser();
+      return state.ledger.filter(l => l.user_id === u.id).slice(0, 50).map(({user_id: _u, ...entry}) => entry);
+    },
+    async listOrders() {
+      const u = requireUser();
+      return state.orders.filter(o => o.user_id === u.id).map(publicOrder);
+    },
+    async getPrivilege() {
+      const p = activePrivilege(requireUser().id);
+      return p ? {product_id: p.product_id, title: p.title, tier: p.tier, expires_at: p.expires_at} : null;
+    },
+    async purchase(productId, serverId, key) {
+      const u = requireUser();
+      const product = state.products.find(p => p.id === productId && p.published);
+      // Сервер выдачи определяет каталог; выбор покупателя учитывается только там, где каталог его допускает.
+      const target = product?.kind === 'item' ? (product.server_id ?? serverId) : null;
+      // Повтор запроса с тем же ключом возвращает прежний заказ и ничего не списывает.
+      const prior = state.orders.find(o => o.user_id === u.id && o.key === key);
+      if (prior) {
+        if (prior.product_id !== productId || prior.server_id !== target) throw new AppError('idempotency_conflict');
+        return publicOrder(prior);
+      }
+      if (!product) throw new AppError('product_unavailable');
+      if (product.kind === 'item') {
+        if (!target) throw new AppError('server_required');
+        if (!state.servers.some(s => s.id === target && s.published)) throw new AppError('product_unavailable');
+      }
+      const current = activePrivilege(u.id);
+      if (product.kind === 'privilege' && current && current.tier > product.tier) throw new AppError('privilege_lower');
+      if (balanceOf(u.id) < product.price) throw new AppError('insufficient_funds');
+
+      // Списание, заказ и привилегия меняются вместе; на сервере это одна транзакция.
+      addLedger(u.id, -product.price, 'purchase', product.title);
+      const order: DemoOrder = {
+        id: uuid(), user_id: u.id, key, product_id: product.id, title: product.title, kind: product.kind,
+        icon: product.icon, server_id: target, price: product.price,
+        // Демо: игровой сервер не подключён, поэтому заказ остаётся в очереди выдачи.
+        status: 'paid', created_at: nowIso(),
+      };
+      state.orders.unshift(order);
+      if (product.kind === 'privilege') {
+        const days = product.duration_days ?? 30;
+        // Тот же ранг продлевается от текущего срока, ранг выше начинается с сегодняшнего дня.
+        const from = current && current.tier === product.tier ? Date.parse(current.expires_at) : Date.now();
+        state.privileges = state.privileges.filter(p => p.user_id !== u.id);
+        state.privileges.push({
+          user_id: u.id, product_id: product.id, title: product.title, tier: product.tier,
+          expires_at: new Date(from + days * 86_400_000).toISOString(),
+        });
+      }
+      persist();
+      emit();
+      return publicOrder(order);
+    },
+    async demoTopUp(amount) {
+      const u = requireUser();
+      if (!Number.isInteger(amount) || amount < DEMO_TOPUP_MIN || amount > DEMO_TOPUP_MAX) throw new AppError('amount_invalid');
+      addLedger(u.id, amount, 'topup', 'Демо-пополнение без оплаты');
+      persist();
+      emit();
     },
 
     demoMailbox() {

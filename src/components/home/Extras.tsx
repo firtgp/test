@@ -1,60 +1,74 @@
 import {useEffect, useState} from 'react';
 import {Link} from 'react-router';
-import {Collapsible, CollapsibleGroup} from '@astryxdesign/core/Collapsible';
-import {Text} from '@astryxdesign/core/Text';
-import {ArrowRightIcon, ArrowUpRightIcon} from '@phosphor-icons/react';
+import {ArrowRightIcon, ArrowUpRightIcon, CalendarBlankIcon, ChatCircleDotsIcon, NewspaperIcon, PlusIcon, QuestionIcon} from '@phosphor-icons/react';
 import {formatInTimeZone} from 'date-fns-tz';
 import {ru} from 'date-fns/locale';
-import {FlickeringGrid} from '@/components/ui/flickering-grid';
 import {formatDateTime} from '../../app/format';
 import {NEWS_KIND_LABEL, type NewsItem, type ServerView, type SiteSettings} from '../../data/types';
+import {PANORAMA_SKY, SKY} from '../../scenes/meta';
 import {startPath} from '../CtaLink';
 import {WorldPoster} from '../VoxelScene';
 
+const skyStyle = (c: [string, string, string]) => ({background: `linear-gradient(180deg, ${c[0]} 0%, ${c[1]} 58%, ${c[2]} 100%)`});
+
 /**
- * Новости: крупные даты, у главной — постер мира её сервера и «живая» обложка (Magic UI FlickeringGrid).
- * Правая колонка всегда заполнена: вторая и третья новость, а если третьей нет — плитка «Все новости».
+ * Новости карточками с обложкой: мир сервера, к которому относится новость, или панорама проекта.
+ * Сетка всегда заполнена: при двух новостях третью ячейку занимает плитка «Все новости».
  */
 export function NewsBlock({items, servers, settings}: {items: NewsItem[]; servers: ServerView[]; settings: SiteSettings}) {
   const shown = items.slice(0, 3);
   return (
-    <ul className={`mc-news2${shown.length === 1 ? ' mc-news2--solo' : ''}`}>
-      {shown.map((n, i) => {
+    <ul className={`mc-news${shown.length === 1 ? ' mc-news--solo' : ''}`}>
+      {shown.map(n => {
         const server = servers.find(s => s.id === n.server_id);
-        const accent = server?.accent;
         const date = n.event_at ?? n.published_at;
         return (
-          <li key={n.id} className={`mc-news2__item${i === 0 ? ' mc-news2__item--lead' : ''}`} style={accent ? {['--server-accent' as string]: accent} : undefined}>
-            {i === 0 ? (
-              <FlickeringGrid className="mc-news2__cover" squareSize={6} gridGap={8} flickerChance={0.3} maxOpacity={0.6} color={accent ?? '#F2B544'} />
-            ) : null}
-            {i === 0 && server ? (
-              <WorldPoster world={server.scene ?? 'survival'} className="mc-news2__art" width={800} height={800} shot={{angle: -0.5, fit: 1.1}} />
-            ) : null}
-            {date ? (
-              <span className="mc-news2__date" aria-hidden="true">
-                <span className="mc-news2__day">{formatInTimeZone(date, settings.timezone, 'd', {locale: ru})}</span>
-                <span className="mc-news2__month">{formatInTimeZone(date, settings.timezone, 'LLL', {locale: ru}).replace('.', '')}</span>
+          <li key={n.id} className="mc-news__item" style={server ? {['--server-accent' as string]: server.accent} : undefined}>
+            <span className="mc-news__art" style={skyStyle(server ? SKY[server.scene ?? 'survival'] : PANORAMA_SKY)} aria-hidden="true">
+              {server ? (
+                <WorldPoster world={server.scene ?? 'survival'} className="mc-news__poster" width={720} height={480} shot={{angle: -0.5, lift: 0.2, fit: 1.02, drop: 0.1}} />
+              ) : (
+                <WorldPoster world="panorama" className="mc-news__poster mc-news__poster--wide" width={900} height={420} shot={{angle: 0.18, lift: 0.14, fit: 1.04, drop: 0.12}} />
+              )}
+              <span className="mc-news__shade" />
+              {date ? (
+                <span className="mc-news__date">
+                  <span className="mc-news__day">{formatInTimeZone(date, settings.timezone, 'd', {locale: ru})}</span>
+                  <span className="mc-news__month">{formatInTimeZone(date, settings.timezone, 'LLL', {locale: ru}).replace('.', '')}</span>
+                </span>
+              ) : null}
+            </span>
+            <span className="mc-news__body">
+              <span className="mc-news__tags">
+                <span className="mc-chip mc-chip--gold">{NEWS_KIND_LABEL[n.kind]}</span>
+                {server ? <span className="mc-chip mc-chip--accent">{server.name}</span> : null}
               </span>
-            ) : null}
-            <span className="mc-news2__body">
-              <span className="mc-chip">{NEWS_KIND_LABEL[n.kind]}</span>
-              <h3 className="mc-news2__title">
+              <h3 className="mc-news__title">
                 <Link to={`/news/${n.slug}`}>{n.title}</Link>
               </h3>
-              {n.event_at ? <span className="mc-news2__when">{formatDateTime(n.event_at, settings)}</span> : null}
-              {n.summary ? <p className="mc-news2__text">{n.summary}</p> : null}
+              {n.event_at ? (
+                <span className="mc-news__when">
+                  <CalendarBlankIcon size={16} weight="fill" aria-hidden="true" />
+                  {formatDateTime(n.event_at, settings)}
+                </span>
+              ) : null}
+              {n.summary ? <p className="mc-news__text">{n.summary}</p> : null}
+              <span className="mc-news__more" aria-hidden="true">
+                Читать <ArrowUpRightIcon size={16} weight="bold" />
+              </span>
             </span>
-            <ArrowUpRightIcon className="mc-news2__arrow" size={24} weight="bold" aria-hidden="true" />
           </li>
         );
       })}
       {shown.length === 2 ? (
-        <li className="mc-news2__all">
+        <li className="mc-news__all">
           <Link to="/news">
-            <span className="mc-news2__all-title">Все новости</span>
-            <span className="mc-news2__all-text">Вайпы, запуски, техработы и ивенты</span>
-            <ArrowRightIcon size={28} weight="bold" aria-hidden="true" />
+            <NewspaperIcon className="mc-news__all-art" size={96} weight="duotone" aria-hidden="true" />
+            <span className="mc-news__all-title">Все новости</span>
+            <span className="mc-news__all-text">Вайпы, запуски, техработы и ивенты</span>
+            <span className="mc-news__all-go">
+              <ArrowRightIcon size={24} weight="bold" aria-hidden="true" />
+            </span>
           </Link>
         </li>
       ) : null}
@@ -71,26 +85,53 @@ const FAQ: {q: string; a: string; link?: {to: string; label: string}}[] = [
   {q: 'Я забыл пароль. Что делать?', a: 'Запросите ссылку для сброса. Она одноразовая; после смены пароля остальные сессии сайта и лаунчера завершаются.', link: {to: '/forgot', label: 'Восстановить пароль'}},
 ];
 
+/** Вопросы стеклянными строками. Открыт один ответ; закрытый ответ недоступен для фокуса. */
 export function Faq() {
+  const [open, setOpen] = useState<number | null>(0);
   return (
-    <CollapsibleGroup type="single" defaultValue="q0">
-      <ul className="mc-faq">
-        {FAQ.map((f, i) => (
-          <li key={f.q} className="mc-faq__item">
-            <Collapsible trigger={f.q} value={`q${i}`}>
-              <Text type="body" color="secondary" as="p">
-                {f.a}
-              </Text>
-              {f.link ? (
-                <Link className="mc-arrow-link" to={f.link.to}>
-                  {f.link.label} <ArrowRightIcon size={16} weight="bold" aria-hidden="true" />
-                </Link>
-              ) : null}
-            </Collapsible>
+    <ul className="mc-faq">
+      {FAQ.map((f, i) => {
+        const on = open === i;
+        return (
+          <li key={f.q} className={`mc-faq__item${on ? ' mc-faq__item--on' : ''}`}>
+            <h3 className="mc-faq__q">
+              <button type="button" id={`faq-q${i}`} aria-expanded={on} aria-controls={`faq-a${i}`} onClick={() => setOpen(on ? null : i)}>
+                <span>{f.q}</span>
+                <span className="mc-faq__plus" aria-hidden="true">
+                  <PlusIcon size={18} weight="bold" />
+                </span>
+              </button>
+            </h3>
+            <span className="mc-faq__a" id={`faq-a${i}`} role="region" aria-labelledby={`faq-q${i}`} inert={!on}>
+              <span className="mc-faq__a-inner">
+                <p>{f.a}</p>
+                {f.link ? (
+                  <Link className="mc-arrow-link" to={f.link.to}>
+                    {f.link.label} <ArrowRightIcon size={16} weight="bold" aria-hidden="true" />
+                  </Link>
+                ) : null}
+              </span>
+            </span>
           </li>
-        ))}
-      </ul>
-    </CollapsibleGroup>
+        );
+      })}
+    </ul>
+  );
+}
+
+/** Лис с фонарём рядом с вопросами: декоративный постер из блоков. */
+export function FaqMascot() {
+  return (
+    <span className="mc-fox" aria-hidden="true">
+      <span className="mc-fox__glow" />
+      <WorldPoster world="fox" className="mc-fox__art mc-float mc-float--slow" width={640} height={640} shot={{angle: 0.45, lift: 0.2, fit: 1.05}} />
+      <span className="mc-fox__chip mc-fox__chip--a mc-float">
+        <QuestionIcon size={20} weight="bold" />
+      </span>
+      <span className="mc-fox__chip mc-fox__chip--b mc-float mc-float--slow">
+        <ChatCircleDotsIcon size={20} weight="fill" />
+      </span>
+    </span>
   );
 }
 

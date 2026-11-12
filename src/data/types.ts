@@ -163,6 +163,11 @@ export const siteSettingsSchema = z.object({
   telegram_url: link,
   vk_url: link,
   contact_email: z.string().trim().refine(v => v === '' || emailSchema.safeParse(v).success, 'Некорректная почта'),
+  /** Внутренняя валюта: название и три формы слова для чисел (1 искра, 2 искры, 5 искр). */
+  currency_name: z.string().trim().min(1).max(24).default('Искры'),
+  currency_one: z.string().trim().min(1).max(24).default('искра'),
+  currency_few: z.string().trim().min(1).max(24).default('искры'),
+  currency_many: z.string().trim().min(1).max(24).default('искр'),
 });
 export type SiteSettings = z.infer<typeof siteSettingsSchema>;
 
@@ -183,6 +188,73 @@ export type StaffEntry = {
   created_at: string;
 }
 
+export const avatarStyleSchema = z.enum(['wanderer', 'engineer', 'mage', 'farmer']);
+
+export const productSchema = z.object({
+  id: z.string().uuid(),
+  slug: z.string().regex(/^[a-z0-9-]{2,60}$/, 'Только строчные латинские буквы, цифры и дефис (2–60)'),
+  kind: z.enum(['item', 'privilege']),
+  title: z.string().trim().min(1, 'Укажите название').max(80),
+  description: z.string().trim().max(400),
+  /** Цена во внутренней валюте. Сервер берёт её из каталога, а не из запроса. */
+  price: z.number().int().min(1, 'Цена больше нуля').max(1_000_000),
+  /** Для предмета — сервер выдачи; null — покупатель выбирает сам. Для привилегии — всегда null (все серверы). */
+  server_id: z.string().uuid().nullable(),
+  mod_name: z.string().trim().max(80),
+  icon: z.enum(['gear', 'drill', 'disk', 'book', 'flower', 'scroll', 'basket', 'pickaxe', 'sparkles', 'chest']),
+  /** Ранг привилегии: 1–3. У предметов — 0. */
+  tier: z.number().int().min(0).max(3),
+  duration_days: z.number().int().min(1).max(3650).nullable(),
+  perks: z.array(z.string().trim().min(1).max(160)).max(12),
+  /**
+   * Отметка для проверки по правилам Mojang: косметика, игровое преимущество или «не проверено».
+   * Проверяет владелец по живому тексту правил перед включением оплаты.
+   */
+  compliance: z.enum(['cosmetic', 'gameplay', 'unchecked']),
+  sort: z.number().int(),
+  published: z.boolean(),
+});
+export type Product = z.infer<typeof productSchema>;
+export const COMPLIANCE_LABEL: Record<Product['compliance'], string> = {
+  cosmetic: 'Косметика',
+  gameplay: 'Игровой предмет',
+  unchecked: 'Не проверено',
+};
+
+export type OrderStatus = 'paid' | 'delivering' | 'delivered' | 'failed' | 'refunded';
+export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
+  paid: 'Оплачено, ждёт выдачи',
+  delivering: 'Выдаётся',
+  delivered: 'Выдано',
+  failed: 'Ошибка выдачи',
+  refunded: 'Возврат',
+};
+export type Order = {
+  id: string;
+  product_id: string;
+  title: string;
+  kind: Product['kind'];
+  icon: Product['icon'];
+  server_id: string | null;
+  price: number;
+  status: OrderStatus;
+  created_at: string;
+}
+export type LedgerEntry = {
+  id: string;
+  delta: number;
+  reason: 'topup' | 'purchase' | 'refund' | 'grant';
+  title: string;
+  balance_after: number;
+  created_at: string;
+}
+export interface ActivePrivilege {
+  product_id: string;
+  title: string;
+  tier: number;
+  expires_at: string;
+}
+
 export interface Account {
   id: string;
   email: string;
@@ -191,6 +263,8 @@ export interface Account {
   mc_uuid: string;
   selected_server_id: string | null;
   nick_changed_at: string | null;
+  /** Образ персонажа на сайте. Игровой скин он не меняет. */
+  avatar_style: z.infer<typeof avatarStyleSchema>;
   roles: {role: StaffRole; server_id: string | null}[];
 }
 
@@ -218,18 +292,20 @@ export interface ServerView extends Server {
   key_mods: string[];
 }
 
-export type ContentTable = 'servers' | 'modpacks' | 'mods' | 'news';
+export type ContentTable = 'servers' | 'modpacks' | 'mods' | 'news' | 'products';
 export interface ContentRow {
   servers: Server;
   modpacks: Modpack;
   mods: Mod;
   news: NewsItem;
+  products: Product;
 }
 export const contentSchemas = {
   servers: serverSchema,
   modpacks: modpackSchema,
   mods: modSchema,
   news: newsSchema,
+  products: productSchema,
 } as const;
 
 /** Ошибка с кодом, по которому интерфейс выбирает понятный текст. */
@@ -262,6 +338,13 @@ export const ERROR_TEXT: Record<string, string> = {
   network: 'Нет связи с сервером. Проверьте интернет и повторите.',
   slug_taken: 'Такой адрес (slug) уже используется.',
   file_invalid: 'Файл не подходит: нужен PNG, JPEG, WebP или AVIF до 8 МБ.',
+  insufficient_funds: 'На балансе не хватает средств. Пополните баланс и повторите.',
+  product_unavailable: 'Этот товар сейчас недоступен.',
+  server_required: 'Выберите сервер, на который выдать предмет.',
+  idempotency_conflict: 'Запрос на покупку не совпал с предыдущим. Обновите страницу и попробуйте снова.',
+  shop_unavailable: 'Магазин и баланс пока работают только в демо-режиме.',
+  privilege_lower: 'У вас уже действует ранг выше. Дождитесь его окончания или выберите ранг не ниже.',
+  amount_invalid: 'Сумма пополнения — целое число от 50 до 50 000.',
   unknown: 'Не получилось выполнить действие. Попробуйте ещё раз.',
 };
 

@@ -1,0 +1,2390 @@
+/*
+ * Блоки главной ниже первого экрана. Грузятся вместе с ними отдельным файлом.
+ * Язык тот же, что в site.css: стекло, тонкие светлые линии, золотое свечение, мягкий свет на фоне.
+ * Цвета и скругления — из темы; hex-значений здесь нет.
+ */
+
+/* ---------- полоса прокрутки страницы ---------- */
+.mc-progress {
+  height: 0.1875rem;
+  z-index: 60;
+  background: linear-gradient(90deg, var(--mc-cta-face), var(--mc-cta-top) 60%, var(--mc-accent-magic));
+}
+
+/* ---------- секция ---------- */
+.mc-sec {
+  position: relative;
+  isolation: isolate;
+  padding: clamp(3.5rem, 2rem + 5vw, 7rem) var(--mc-gutter);
+  background-color: var(--mc-night);
+  overflow: hidden;
+  overflow: clip;
+}
+.mc-sec__inner {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: clamp(2rem, 1.5rem + 2vw, 3.5rem);
+  max-width: 82rem;
+  margin-inline: auto;
+}
+.mc-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--spacing-5) var(--spacing-8);
+}
+.mc-head__copy {
+  display: grid;
+  gap: var(--spacing-4);
+  justify-items: start;
+  max-width: 44rem;
+}
+.mc-head--center {
+  justify-content: center;
+  text-align: center;
+}
+.mc-head--center .mc-head__copy {
+  justify-items: center;
+}
+.mc-label__num {
+  color: var(--color-text-secondary);
+}
+
+/* ---------- фоновые эффекты ---------- */
+.mc-arcs {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+/* Блик, который медленно идёт по дуге. */
+.mc-arcs__run {
+  stroke-dasharray: 70 930;
+  stroke-dashoffset: 1000;
+  animation: mc-arc-run 11s linear infinite;
+}
+@keyframes mc-arc-run {
+  to { stroke-dashoffset: 0; }
+}
+.mc-sec__grid,
+.mc-sec__dots {
+  z-index: 0;
+  fill: color-mix(in srgb, var(--mc-cta-top) 40%, transparent);
+  stroke: color-mix(in srgb, white 16%, transparent);
+  mask-image: radial-gradient(70% 80% at 72% 48%, black, transparent 78%);
+}
+.mc-sec__dots {
+  fill: color-mix(in srgb, white 26%, transparent);
+  mask-image: radial-gradient(60% 70% at 30% 40%, black, transparent 80%);
+}
+/* Листва на переднем плане: тёмная и размытая, как объект вне фокуса. */
+.mc-foliage {
+  position: absolute;
+  z-index: 0;
+  width: clamp(11rem, 21vw, 21rem);
+  aspect-ratio: 1;
+  filter: blur(0.3125rem) brightness(0.5) saturate(0.85);
+}
+.mc-foliage--bl { inset-inline-start: -5rem; inset-block-end: -7rem; }
+.mc-foliage--br { inset-inline-end: -5rem; inset-block-end: -7rem; }
+.mc-foliage--tl { inset-inline-start: -5rem; inset-block-start: -7rem; transform: rotate(180deg); }
+.mc-foliage--tr { inset-inline-end: -5rem; inset-block-start: -7rem; transform: rotate(180deg); }
+
+/* ================= ленты модов ================= */
+.mc-ticker {
+  position: relative;
+  z-index: 3;
+  height: 6.5rem;
+  margin-block: -2.5rem -1.25rem;
+  overflow: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
+  pointer-events: none;
+}
+.mc-ticker__band {
+  position: absolute;
+  inset-inline: -3%;
+  inset-block-start: 50%;
+  padding: var(--spacing-3) 0;
+}
+.mc-ticker__band--front {
+  transform: translateY(-50%) rotate(-1.6deg);
+  background: linear-gradient(180deg, var(--mc-cta-top), var(--mc-cta-face));
+  color: var(--mc-cta-text);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 55%, transparent),
+    0 1.25rem 3rem -1rem color-mix(in srgb, var(--mc-cta-face) 55%, transparent);
+}
+.mc-ticker__band--back {
+  transform: translateY(-50%) rotate(1.5deg);
+  border-block: 1px solid var(--mc-line-2);
+  background: color-mix(in srgb, var(--mc-night) 86%, transparent);
+  color: var(--color-text-secondary);
+}
+.mc-ticker__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 2rem;
+  font-family: var(--font-family-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.mc-ticker__item svg {
+  flex: none;
+  opacity: 0.65;
+}
+
+/* ================= цифры ================= */
+.mc-sec--stats {
+  padding-block: clamp(2.5rem, 2rem + 2vw, 4rem) 0;
+}
+.mc-stats {
+  list-style: none;
+  margin: 0 auto;
+  padding: 0;
+  max-width: 82rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--spacing-4);
+}
+.mc-stat {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: var(--spacing-4);
+  padding: var(--spacing-5) var(--spacing-6);
+  border-radius: var(--mc-r-card);
+  border: 1px solid var(--mc-line);
+  background: linear-gradient(180deg, var(--mc-glass-2), var(--mc-glass));
+  box-shadow: inset 0 1px 0 var(--mc-line);
+  transition: transform var(--duration-medium) var(--ease-standard), border-color var(--duration-medium) var(--ease-standard);
+}
+.mc-stat:hover {
+  transform: translateY(-0.25rem);
+  border-color: color-mix(in srgb, var(--mc-cta-top) 50%, transparent);
+}
+.mc-stat__icon {
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: var(--mc-r-tile);
+  border: 1px solid color-mix(in srgb, var(--mc-cta-face) 40%, transparent);
+  background: color-mix(in srgb, var(--mc-cta-face) 12%, transparent);
+  color: var(--mc-cta-top);
+}
+.mc-stat__value {
+  font-family: var(--font-family-heading);
+  font-size: clamp(1.75rem, 1.3rem + 1.4vw, 2.625rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+}
+.mc-stat__value--text {
+  font-size: clamp(1.5rem, 1.2rem + 1vw, 2.125rem);
+}
+.mc-stat__value .mc-num {
+  color: inherit;
+}
+.mc-stat__label {
+  font-size: 0.875rem;
+  line-height: 1.35;
+  color: var(--color-text-secondary);
+}
+/* Первая карточка — «живая»: золотая, как главное действие. */
+.mc-stat--hot {
+  border-color: transparent;
+  background: linear-gradient(180deg, var(--mc-cta-top), var(--mc-cta-face));
+  box-shadow:
+    inset 0 2px 0 color-mix(in srgb, white 55%, transparent),
+    0 1.5rem 3rem -1.25rem color-mix(in srgb, var(--mc-cta-face) 65%, transparent);
+}
+.mc-stat--hot .mc-stat__value,
+.mc-stat--hot .mc-stat__label {
+  color: var(--mc-cta-text);
+}
+.mc-stat--hot .mc-stat__icon {
+  border-color: color-mix(in srgb, var(--mc-cta-text) 28%, transparent);
+  background: color-mix(in srgb, var(--mc-cta-text) 12%, transparent);
+  color: var(--mc-cta-text);
+}
+
+/* ================= 01 · старт ================= */
+.mc-sec--start {
+  background-image:
+    radial-gradient(48rem 30rem at 84% 52%, color-mix(in srgb, var(--mc-cta-face) 13%, transparent), transparent 70%),
+    radial-gradient(40rem 26rem at 0% 100%, color-mix(in srgb, var(--mc-accent-survival) 9%, transparent), transparent 70%);
+}
+.mc-start {
+  display: grid;
+  grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.22fr);
+  align-items: center;
+  gap: clamp(1.5rem, 1rem + 3vw, 4.5rem);
+}
+.mc-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--spacing-3);
+}
+.mc-step {
+  position: relative;
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--spacing-4);
+  padding: var(--spacing-4) var(--spacing-5);
+  border: 1px solid var(--mc-line);
+  border-radius: var(--mc-r-card);
+  background: var(--mc-glass);
+  color: var(--color-text-primary);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  overflow: hidden;
+  transition:
+    border-color var(--duration-medium) var(--ease-standard),
+    background-color var(--duration-medium) var(--ease-standard),
+    transform var(--duration-medium) var(--ease-standard),
+    box-shadow var(--duration-medium) var(--ease-standard);
+}
+.mc-step:hover {
+  border-color: var(--mc-line-2);
+  background: var(--mc-glass-2);
+}
+.mc-step__icon {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--mc-r-tile);
+  border: 1px solid var(--mc-line-2);
+  background: var(--mc-glass);
+  color: var(--color-text-secondary);
+  transition: background-color var(--duration-medium) var(--ease-standard), color var(--duration-medium) var(--ease-standard);
+}
+.mc-step__copy {
+  display: grid;
+  gap: var(--spacing-0-5);
+  min-width: 0;
+}
+.mc-step__title {
+  font-family: var(--font-family-heading);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.mc-step__text {
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+.mc-step__num {
+  font-family: var(--font-family-heading);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--color-text-secondary);
+}
+.mc-step--on {
+  border-color: color-mix(in srgb, var(--mc-cta-top) 60%, transparent);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--mc-cta-face) 18%, transparent), var(--mc-glass) 70%);
+  box-shadow: 0 1.25rem 2.5rem -1.5rem color-mix(in srgb, var(--mc-cta-face) 70%, transparent);
+}
+.mc-step--on .mc-step__icon {
+  border-color: transparent;
+  background: linear-gradient(180deg, var(--mc-cta-top), var(--mc-cta-face));
+  color: var(--mc-cta-text);
+}
+.mc-step--on .mc-step__num {
+  color: var(--mc-cta-top);
+}
+.mc-step__progress {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  height: 0.125rem;
+  background: var(--mc-cta-top);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+}
+.mc-step--run .mc-step__progress {
+  animation: mc-step-run 5200ms linear forwards;
+}
+@keyframes mc-step-run {
+  to { transform: scaleX(1); }
+}
+
+/* Сцена с окном: под окном — островок с фонарём и золотой свет. */
+.mc-stage {
+  position: relative;
+  margin: 0;
+  display: grid;
+  gap: var(--spacing-4);
+  padding-block-end: clamp(6.5rem, 12vw, 9.5rem);
+  perspective: 90rem;
+}
+.mc-stage__glow {
+  position: absolute;
+  inset: 4% -4% 10%;
+  z-index: -1;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--mc-cta-face) 30%, transparent), transparent);
+  filter: blur(1.5rem);
+}
+/* Островок стоит перед окном: фонарь заходит на его нижнюю кромку и даёт глубину. */
+.mc-stage__ledge {
+  position: absolute;
+  inset-inline-start: 36%;
+  inset-block-end: 0;
+  z-index: 2;
+  width: clamp(13rem, 46%, 22rem);
+  aspect-ratio: 900 / 520;
+}
+.mc-stage__note {
+  position: relative;
+  z-index: 2;
+  max-width: 32%;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
+
+/* ---------- окно приложения ---------- */
+.mc-win {
+  --edge: var(--mc-cta-top);
+  position: relative;
+  z-index: 1;
+  container-type: inline-size;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  aspect-ratio: 16 / 10.4;
+  border-radius: 1.25rem;
+  background: linear-gradient(180deg, var(--color-background-surface), var(--color-background-body));
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--mc-cta-top) 34%, transparent),
+    0 2.5rem 5rem -2rem color-mix(in srgb, black 85%, transparent),
+    0 0 6rem -1rem color-mix(in srgb, var(--mc-cta-face) 60%, transparent);
+  overflow: hidden;
+  /* Всё внутри окна задано в em и масштабируется вместе с его шириной. */
+  font-size: clamp(0.6875rem, 1.95cqi, 0.9375rem);
+  line-height: 1.35;
+  color: var(--color-text-primary);
+  transform: rotateY(-7deg) rotateX(2.5deg);
+  transform-origin: 70% 50%;
+  transition: transform var(--duration-slow) var(--ease-standard);
+}
+.mc-stage:hover .mc-win {
+  transform: rotateY(-2deg) rotateX(0.5deg);
+}
+.mc-win svg {
+  flex: none;
+  width: 1.15em;
+  height: 1.15em;
+}
+.mc-win__bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75em;
+  height: 3em;
+  padding-inline: 1em;
+  border-block-end: 1px solid var(--mc-line);
+  background: var(--mc-glass);
+}
+.mc-win__app {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.8em;
+  height: 1.8em;
+  border-radius: 0.5em;
+  background: linear-gradient(180deg, var(--mc-cta-top), var(--mc-cta-face));
+  color: var(--mc-cta-text);
+}
+.mc-win__title {
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mc-win__url {
+  flex: 1;
+  min-width: 0;
+  max-width: 26em;
+  margin-inline: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  height: 1.9em;
+  padding-inline: 0.9em;
+  border: 1px solid var(--mc-line);
+  border-radius: var(--radius-full);
+  background: var(--mc-glass);
+  font-family: var(--font-family-code);
+  font-size: 0.9em;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mc-win__ctl {
+  margin-inline-start: auto;
+  display: inline-flex;
+  gap: 1.1em;
+  color: var(--color-text-secondary);
+}
+.mc-win__body {
+  position: relative;
+  min-height: 0;
+  display: grid;
+  animation: mc-win-in 460ms var(--ease-entrance) both;
+}
+@keyframes mc-win-in {
+  from { opacity: 0; transform: translateY(0.6em); }
+}
+.mc-win__status {
+  display: flex;
+  justify-content: space-between;
+  gap: 1em;
+  padding: 0.6em 1em;
+  border-block-start: 1px solid var(--mc-line);
+  background: color-mix(in srgb, black 25%, transparent);
+  font-size: 0.85em;
+  color: var(--color-text-secondary);
+}
+.mc-win__status span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55em;
+  white-space: nowrap;
+}
+.mc-win__led {
+  width: 0.6em;
+  height: 0.6em;
+  border-radius: var(--radius-full);
+  background: var(--mc-status-maintenance);
+}
+.mc-win__led--ok {
+  background: var(--mc-status-online);
+  box-shadow: 0 0 0 0.25em color-mix(in srgb, var(--mc-status-online) 25%, transparent);
+}
+.mc-win__btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  min-height: 2.9em;
+  padding-inline: 1.4em;
+  border-radius: 0.8em;
+  background: linear-gradient(180deg, var(--mc-cta-top), var(--mc-cta-face));
+  color: var(--mc-cta-text);
+  font-family: var(--font-family-heading);
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 55%, transparent),
+    inset 0 -0.2em 0 var(--mc-cta-bottom),
+    0 0.8em 1.6em -0.6em color-mix(in srgb, var(--mc-cta-face) 70%, transparent);
+  /* Нажатие совпадает с приходом курсора. */
+  animation: mc-press 360ms var(--ease-standard) 2.5s both;
+}
+@keyframes mc-press {
+  40% { transform: translateY(0.15em) scale(0.97); filter: brightness(1.12); }
+}
+/* Курсор подходит к главной кнопке экрана и нажимает её. */
+.mc-win__cursor {
+  position: absolute;
+  z-index: 3;
+  inset-inline-start: var(--cx, 78%);
+  inset-block-start: var(--cy, 80%);
+  width: 1.6em !important;
+  height: 1.6em !important;
+  color: white;
+  filter: drop-shadow(0 0.2em 0.3em color-mix(in srgb, black 60%, transparent));
+  animation: mc-cursor 1.9s var(--ease-standard) 0.7s both;
+  pointer-events: none;
+}
+@keyframes mc-cursor {
+  0% { opacity: 0; transform: translate(-9em, 4em); }
+  20% { opacity: 1; }
+  80% { transform: translate(0, 0) scale(1); }
+  90% { transform: translate(0, 0) scale(0.84); }
+  100% { opacity: 1; transform: translate(0, 0) scale(1); }
+}
+
+/* поля макета */
+.mc-field {
+  display: grid;
+  gap: 0.3em;
+}
+.mc-field__label {
+  font-size: 0.8em;
+  color: var(--color-text-secondary);
+}
+.mc-field__box {
+  display: flex;
+  align-items: center;
+  gap: 0.25em;
+  height: 2.7em;
+  padding-inline: 0.9em;
+  border: 1px solid var(--mc-line-2);
+  border-radius: 0.7em;
+  background: color-mix(in srgb, black 28%, transparent);
+  font-weight: 600;
+}
+.mc-field__value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mc-field__box svg {
+  margin-inline-start: auto;
+  color: var(--mc-status-online);
+}
+.mc-field--focus .mc-field__box {
+  border-color: var(--mc-cta-top);
+  box-shadow: 0 0 0 0.2em color-mix(in srgb, var(--mc-cta-face) 22%, transparent);
+}
+.mc-field__caret {
+  width: 0.1em;
+  height: 1.2em;
+  background: var(--mc-cta-top);
+  animation: mc-caret 1.1s steps(1) infinite;
+}
+@keyframes mc-caret {
+  50% { opacity: 0; }
+}
+.mc-field__meter {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.3em;
+}
+.mc-field__meter i {
+  height: 0.25em;
+  border-radius: var(--radius-full);
+  background: var(--mc-status-online);
+}
+.mc-field__meter i:last-child {
+  background: var(--mc-line-2);
+}
+
+/* экран 1: установка */
+.mc-win__body--install {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-content: center;
+  align-items: center;
+  gap: 1.6em 2em;
+  padding: 1.6em 2.4em;
+  background: radial-gradient(24em 14em at 20% 30%, color-mix(in srgb, var(--mc-cta-face) 16%, transparent), transparent 70%);
+}
+.mc-inst__logo {
+  display: grid;
+  place-items: center;
+  width: 7.5em;
+  height: 7.5em;
+  border-radius: 1.8em;
+  background: linear-gradient(160deg, var(--mc-cta-top), var(--mc-cta-face) 55%, var(--mc-cta-bottom));
+  color: var(--mc-cta-text);
+  box-shadow:
+    inset 0 0.15em 0 color-mix(in srgb, white 60%, transparent),
+    0 1.5em 3em -1em color-mix(in srgb, var(--mc-cta-face) 80%, transparent);
+}
+.mc-inst__logo svg {
+  width: 4em;
+  height: 4em;
+}
+.mc-inst__main {
+  display: grid;
+  gap: 0.8em;
+  min-width: 0;
+}
+.mc-inst__name {
+  font-family: var(--font-family-heading);
+  font-size: 1.5em;
+  font-weight: 700;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+.mc-inst__file {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5em;
+  font-family: var(--font-family-code);
+  font-size: 0.95em;
+  color: var(--color-text-secondary);
+}
+.mc-inst__os {
+  margin-inline-start: auto;
+  font-family: var(--font-family-body);
+}
+.mc-inst__bar,
+.mc-play__syncbar {
+  display: block;
+  height: 0.6em;
+  border-radius: var(--radius-full);
+  background: var(--mc-glass-2);
+  overflow: hidden;
+}
+.mc-inst__bar i,
+.mc-play__syncbar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--mc-cta-face), var(--mc-cta-top));
+  transform-origin: 0 50%;
+  animation: mc-fill 2.4s var(--ease-standard) 0.3s both;
+}
+@keyframes mc-fill {
+  from { transform: scaleX(0.04); }
+}
+.mc-inst__state {
+  display: grid;
+  font-size: 0.9em;
+  font-weight: 600;
+}
+.mc-inst__state > span {
+  grid-area: 1 / 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+}
+.mc-inst__state-a {
+  color: var(--color-text-secondary);
+  animation: mc-out 300ms ease 2.6s both;
+}
+.mc-inst__state-b {
+  color: var(--color-text-success);
+  animation: mc-pop 300ms ease 2.7s both;
+}
+@keyframes mc-out {
+  to { opacity: 0; }
+}
+@keyframes mc-pop {
+  from { opacity: 0; transform: translateY(0.4em); }
+}
+.mc-inst__list {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8em;
+}
+.mc-inst__list span {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  padding: 0.8em 1em;
+  border: 1px solid var(--mc-line);
+  border-radius: 0.9em;
+  background: var(--mc-glass);
+  font-weight: 600;
+  line-height: 1.2;
+  animation: mc-pop 400ms var(--ease-entrance) both;
+  animation-delay: calc(1s + var(--i) * 0.5s);
+}
+.mc-inst__list svg {
+  color: var(--mc-status-online);
+}
+
+/* экран 2: регистрация на сайте */
+.mc-win__body--reg {
+  --cx: 43%;
+  --cy: 80%;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  align-items: center;
+  gap: 1.6em;
+  padding: 1.4em 2em;
+  background: radial-gradient(22em 14em at 85% 40%, color-mix(in srgb, var(--mc-cta-face) 14%, transparent), transparent 70%);
+}
+.mc-reg__form {
+  display: grid;
+  gap: 0.65em;
+}
+.mc-reg__title {
+  font-family: var(--font-family-heading);
+  font-size: 1.25em;
+  font-weight: 700;
+}
+.mc-reg__mail {
+  display: grid;
+  justify-items: center;
+  gap: 0.6em;
+  padding: 1.6em 1em;
+  border: 1px dashed color-mix(in srgb, var(--mc-cta-top) 55%, transparent);
+  border-radius: 1.1em;
+  background: color-mix(in srgb, var(--mc-cta-face) 7%, transparent);
+  text-align: center;
+  animation: mc-pop 500ms var(--ease-entrance) 2.9s both;
+}
+.mc-reg__env {
+  display: grid;
+  place-items: center;
+  width: 4.2em;
+  height: 4.2em;
+  border-radius: var(--radius-full);
+  background: linear-gradient(180deg, var(--mc-cta-top), var(--mc-cta-face));
+  color: var(--mc-cta-text);
+  box-shadow: 0 1em 2em -0.8em color-mix(in srgb, var(--mc-cta-face) 80%, transparent);
+}
+.mc-reg__env svg {
+  width: 2em;
+  height: 2em;
+}
+.mc-reg__mail-title {
+  font-family: var(--font-family-heading);
+  font-weight: 600;
+}
+.mc-reg__mail-text {
+  font-size: 0.9em;
+  color: var(--color-text-secondary);
+}
+
+/* экран 3: вход в лаунчер */
+.mc-win__body--login {
+  --cx: 61%;
+  --cy: 73%;
+  place-items: center;
+  overflow: hidden;
+}
+.mc-win__art {
+  position: absolute;
+  inset: auto 0 0;
+  height: 76%;
+}
+.mc-win__art img {
+  object-fit: cover;
+  object-position: 50% 100%;
+}
+.mc-login {
+  position: relative;
+  width: min(22em, 84%);
+  display: grid;
+  gap: 0.65em;
+  padding: 1.3em 1.4em;
+  border: 1px solid var(--mc-line-2);
+  border-radius: 1.2em;
+  background: color-mix(in srgb, var(--mc-night) 78%, transparent);
+  backdrop-filter: blur(0.875rem);
+  box-shadow: 0 2em 4em -1.5em color-mix(in srgb, black 85%, transparent);
+}
+.mc-login__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  font-family: var(--font-family-heading);
+  font-size: 1.1em;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.mc-login__remember {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  font-size: 0.85em;
+  color: var(--color-text-secondary);
+}
+.mc-login__remember i {
+  display: grid;
+  place-items: center;
+  width: 1.3em;
+  height: 1.3em;
+  border-radius: 0.35em;
+  background: var(--mc-cta-face);
+  color: var(--mc-cta-text);
+}
+.mc-login__remember svg {
+  width: 0.85em;
+  height: 0.85em;
+}
+.mc-login__hint {
+  font-size: 0.8em;
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+/* экран 4: выбор сервера */
+.mc-win__body--play {
+  --cx: 94.5%;
+  --cy: 88%;
+  grid-template-columns: auto minmax(0, 1fr);
+}
+.mc-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5em;
+  padding: 0.8em 0.6em;
+  border-inline-end: 1px solid var(--mc-line);
+  background: color-mix(in srgb, black 22%, transparent);
+}
+.mc-rail__btn {
+  display: grid;
+  place-items: center;
+  width: 2.6em;
+  height: 2.6em;
+  border-radius: 0.8em;
+  color: var(--color-text-secondary);
+}
+.mc-rail__btn--on {
+  background: color-mix(in srgb, var(--mc-cta-face) 18%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mc-cta-top) 50%, transparent);
+  color: var(--mc-cta-top);
+}
+.mc-rail__me {
+  margin-block-start: auto;
+  display: grid;
+  place-items: center;
+  width: 2.4em;
+  height: 2.4em;
+  border-radius: 0.7em;
+  background: linear-gradient(160deg, var(--mc-accent-techno), var(--mc-accent-magic));
+  color: var(--mc-cta-text);
+  font-family: var(--font-family-heading);
+  font-weight: 700;
+}
+.mc-play {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto auto auto;
+  gap: 0.75em;
+  min-width: 0;
+  min-height: 0;
+  padding: 1em 1.2em;
+}
+.mc-play__banner {
+  --server-accent: var(--color-accent);
+  position: relative;
+  min-height: 7em;
+  border-radius: 1em;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, white 14%, transparent);
+  overflow: hidden;
+}
+.mc-play__art {
+  position: absolute;
+  inset: -6% -4% -16% 34%;
+}
+.mc-play__shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--mc-night) 88%, transparent), color-mix(in srgb, var(--mc-night) 40%, transparent) 55%, transparent);
+}
+.mc-play__info {
+  position: absolute;
+  inset-inline-start: 1.2em;
+  inset-block-end: 1em;
+  display: grid;
+  gap: 0.2em;
+  max-width: 62%;
+}
+.mc-play__name {
+  font-family: var(--font-family-heading);
+  font-size: 1.5em;
+  font-weight: 700;
+  line-height: 1.1;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+.mc-play__pack {
+  font-size: 0.9em;
+  font-weight: 600;
+  color: var(--server-accent);
+}
+.mc-play__online {
+  position: absolute;
+  inset-block-start: 0.9em;
+  inset-inline-end: 0.9em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 0.35em 0.8em;
+  border: 1px solid var(--mc-line-2);
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--mc-night) 70%, transparent);
+  font-size: 0.85em;
+  font-weight: 700;
+}
+.mc-play__online i {
+  width: 0.55em;
+  height: 0.55em;
+  border-radius: var(--radius-full);
+  background: var(--mc-status-online);
+}
+.mc-play__label {
+  font-size: 0.75em;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+.mc-play__servers {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6em;
+}
+.mc-play__srv {
+  --server-accent: var(--color-accent);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 0.6em;
+  padding: 0.55em 0.8em;
+  border: 1px solid var(--mc-line);
+  border-radius: 0.8em;
+  background: var(--mc-glass);
+}
+.mc-play__srv--on {
+  border-color: var(--server-accent);
+  background: color-mix(in srgb, var(--server-accent) 14%, transparent);
+  box-shadow: 0 0.6em 1.4em -0.8em var(--server-accent);
+}
+.mc-play__srv i {
+  grid-row: span 2;
+  width: 0.6em;
+  height: 0.6em;
+  border-radius: var(--radius-full);
+  background: var(--server-accent);
+}
+.mc-play__srv-name {
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mc-play__srv-ver {
+  font-size: 0.8em;
+  color: var(--color-text-secondary);
+}
+.mc-play__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1.2em;
+}
+.mc-play__sync {
+  display: grid;
+  gap: 0.45em;
+  font-size: 0.85em;
+  color: var(--color-text-secondary);
+}
+.mc-play__sync > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+}
+.mc-play__syncbar {
+  height: 0.4em;
+}
+.mc-win__btn--play {
+  min-height: 3.3em;
+  padding-inline: 2.4em;
+  font-size: 1.1em;
+}
+
+/* ================= 02 · аккаунт ================= */
+.mc-sec--account {
+  background-image:
+    radial-gradient(44rem 30rem at 76% 50%, color-mix(in srgb, var(--mc-accent-magic) 17%, transparent), transparent 70%),
+    radial-gradient(32rem 22rem at 70% 54%, color-mix(in srgb, var(--mc-cta-face) 12%, transparent), transparent 70%);
+}
+.mc-acc {
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  align-items: center;
+  gap: clamp(2rem, 1rem + 4vw, 5rem);
+}
+.mc-acc__copy {
+  display: grid;
+  gap: var(--spacing-6);
+}
+.mc-acc__rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--spacing-3);
+}
+.mc-acc__row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: var(--spacing-4);
+  padding: var(--spacing-4) var(--spacing-5);
+  border: 1px solid var(--mc-line);
+  border-radius: var(--mc-r-card);
+  background: linear-gradient(180deg, var(--mc-glass-2), var(--mc-glass));
+  transition: border-color var(--duration-medium) var(--ease-standard), transform var(--duration-medium) var(--ease-standard);
+}
+.mc-acc__row:hover {
+  border-color: color-mix(in srgb, var(--mc-cta-top) 50%, transparent);
+  transform: translateX(0.375rem);
+}
+.mc-acc__icon {
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--mc-r-tile);
+  border: 1px solid color-mix(in srgb, var(--mc-cta-face) 40%, transparent);
+  background: color-mix(in srgb, var(--mc-cta-face) 12%, transparent);
+  color: var(--mc-cta-top);
+}
+.mc-acc__row-title {
+  font-family: var(--font-family-heading);
+  font-size: 1rem;
+  font-weight: 600;
+}
+.mc-acc__row-text {
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+.mc-acc__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-3);
+}
+
+/* Орбиты вокруг золотого куба. */
+.mc-orbit {
+  position: relative;
+  margin: 0;
+  justify-self: center;
+  width: 100%;
+  max-width: 37rem;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+}
+.mc-orbit__dots {
+  fill: color-mix(in srgb, white 30%, transparent);
+  mask-image: radial-gradient(closest-side, black 30%, transparent 96%);
+}
+.mc-orbit__glow {
+  position: absolute;
+  width: 64%;
+  aspect-ratio: 1;
+  border-radius: var(--radius-full);
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--mc-cta-face) 55%, transparent), color-mix(in srgb, var(--mc-accent-magic) 22%, transparent) 60%, transparent);
+  filter: blur(1.75rem);
+  animation: mc-breathe 6s ease-in-out infinite;
+}
+@keyframes mc-breathe {
+  0%, 100% { opacity: 0.55; transform: scale(0.94); }
+  50% { opacity: 0.85; transform: scale(1.04); }
+}
+.mc-orbit__ring {
+  position: absolute;
+  width: calc(var(--d) * 2);
+  aspect-ratio: 1;
+  border-radius: var(--radius-full);
+  border: 1px dashed color-mix(in srgb, var(--mc-cta-top) 38%, transparent);
+  box-shadow: inset 0 0 3rem color-mix(in srgb, var(--mc-cta-face) 6%, transparent);
+}
+.mc-orbit__ring--1 { --d: var(--r1); }
+.mc-orbit__ring--2 {
+  --d: var(--r2);
+  border-style: solid;
+  border-color: var(--mc-line);
+}
+/* Дорожки орбит: дочерние элементы OrbitingCircles встают в центр. */
+.mc-orbit__tracks {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mc-orbit__cube {
+  position: relative;
+  z-index: 1;
+  width: 44%;
+  aspect-ratio: 1;
+}
+.mc-orbit__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-1) var(--spacing-3) var(--spacing-1) var(--spacing-1);
+  border: 1px solid var(--mc-line-2);
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--mc-night) 82%, transparent);
+  backdrop-filter: blur(0.625rem);
+  box-shadow: 0 0.75rem 1.5rem -0.75rem color-mix(in srgb, black 80%, transparent);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--color-text-primary);
+}
+.mc-orbit__chip-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.875rem;
+  height: 1.875rem;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--mc-cta-face) 20%, transparent);
+  color: var(--mc-cta-top);
+}
+.mc-orbit__chip--world {
+  --server-accent: var(--color-accent);
+  border-color: color-mix(in srgb, var(--server-accent) 55%, transparent);
+}
+.mc-orbit__chip--world .mc-orbit__chip-icon {
+  background: color-mix(in srgb, var(--server-accent) 22%, transparent);
+  color: var(--server-accent);
+}
+.mc-orbit__spark {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: var(--radius-full);
+  background: var(--mc-cta-top);
+  box-shadow: 0 0 0.75rem 0.25rem color-mix(in srgb, var(--mc-cta-top) 70%, transparent);
+}
+.mc-orbit__id {
+  position: absolute;
+  z-index: 2;
+  inset-block-end: 4%;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  max-width: 92%;
+  padding: var(--spacing-2) var(--spacing-4);
+  border: 1px solid color-mix(in srgb, var(--mc-cta-top) 45%, transparent);
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--mc-night) 80%, transparent);
+  backdrop-filter: blur(0.625rem);
+  font-size: 0.875rem;
+  color: var(--mc-cta-top);
+}
+.mc-orbit__nick {
+  font-weight: 700;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mc-orbit__uuid {
+  white-space: nowrap;
+  color: var(--color-text-secondary);
+}
+
+/* ================= 03 · кабинет ================= */
+.mc-sec--cab {
+  padding-block: clamp(1rem, 0.5rem + 2vw, 3rem);
+}
+.mc-cabt {
+  --edge: var(--mc-accent-magic);
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  align-items: center;
+  gap: clamp(1.5rem, 1rem + 3vw, 4rem);
+  max-width: 82rem;
+  margin-inline: auto;
+  padding: clamp(1.5rem, 1rem + 2.4vw, 3.5rem);
+  border-radius: var(--mc-r-xl);
+  background:
+    radial-gradient(34rem 26rem at 16% 62%, color-mix(in srgb, var(--mc-accent-magic) 26%, transparent), transparent 70%),
+    radial-gradient(30rem 20rem at 100% 0%, color-mix(in srgb, var(--mc-cta-face) 12%, transparent), transparent 70%),
+    linear-gradient(135deg, var(--mc-glass-2), var(--mc-glass));
+  box-shadow: 0 3rem 6rem -3rem color-mix(in srgb, var(--mc-accent-magic) 55%, transparent);
+  overflow: hidden;
+}
+.mc-cabt__stage {
+  position: relative;
+  align-self: stretch;
+  min-height: 24rem;
+  display: grid;
+  place-items: end center;
+}
+.mc-cabt__halo {
+  position: absolute;
+  inset-inline-start: 50%;
+  inset-block-end: 6%;
+  width: 84%;
+  aspect-ratio: 1;
+  transform: translateX(-50%);
+  border-radius: var(--radius-full);
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--mc-cta-face) 45%, transparent), color-mix(in srgb, var(--mc-accent-magic) 20%, transparent) 58%, transparent);
+  filter: blur(1.5rem);
+  animation: mc-breathe 7s ease-in-out infinite;
+}
+.mc-cabt__hero {
+  position: relative;
+  width: min(100%, 21rem);
+  aspect-ratio: 4 / 5;
+}
+.mc-cabt__prop {
+  position: absolute;
+  width: clamp(4.5rem, 8.5vw, 7rem);
+  aspect-ratio: 1;
+}
+.mc-cabt__prop--coin { inset-block-start: 4%; inset-inline-end: 8%; }
+.mc-cabt__prop--a { inset-block-start: 22%; inset-inline-start: 0; }
+.mc-cabt__prop--b { inset-block-end: 26%; inset-inline-end: 0; }
+.mc-cabt__prop--c { inset-block-end: 6%; inset-inline-start: 4%; }
+.mc-cabt__copy {
+  display: grid;
+  gap: var(--spacing-5);
+  justify-items: start;
+  min-width: 0;
+}
+.mc-cabt__tiles {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-3);
+}
+.mc-cabt__tiles li {
+  display: grid;
+  align-content: start;
+  gap: var(--spacing-2);
+  padding: var(--spacing-4);
+  border: 1px solid var(--mc-line);
+  border-radius: var(--mc-r-tile);
+  background: color-mix(in srgb, var(--mc-night) 50%, transparent);
+}
+.mc-cabt__icon {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--mc-r-btn);
+  background: color-mix(in srgb, var(--mc-cta-face) 16%, transparent);
+  color: var(--mc-cta-top);
+}
+.mc-cabt__tile-title {
+  font-family: var(--font-family-heading);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.mc-cabt__tile-text {
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+.mc-cabt__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-3);
+}
+.mc-cabt__note {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+
+/* ================= 04 · серверы ================= */
+.mc-sec--servers {
+  background-image:
+    radial-gradient(40rem 26rem at 8% 20%, color-mix(in srgb, var(--mc-accent-techno) 10%, transparent), transparent 70%),
+    radial-gradient(36rem 26rem at 100% 90%, color-mix(in srgb, var(--mc-accent-magic) 10%, transparent), transparent 70%);
+}
+.mc-bento {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.18fr) minmax(0, 1fr);
+  gap: var(--spacing-5);
+}
+.mc-bento--solo {
+  grid-template-columns: minmax(0, 1fr);
+}
+.mc-srv {
+  --server-accent: var(--color-accent);
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr);
+  border: 1px solid color-mix(in srgb, var(--server-accent) 32%, var(--mc-line));
+  border-radius: var(--mc-r-xl);
+  background: linear-gradient(180deg, var(--mc-glass-2), var(--mc-glass));
+  box-shadow: 0 2rem 4rem -2.75rem var(--server-accent);
+  overflow: hidden;
+  transition:
+    transform var(--duration-medium) var(--ease-standard),
+    border-color var(--duration-medium) var(--ease-standard),
+    box-shadow var(--duration-medium) var(--ease-standard);
+}
+/* Пятно света под указателем. */
+.mc-srv::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: radial-gradient(24rem circle at var(--mx, 50%) var(--my, 0%), color-mix(in srgb, var(--server-accent) 20%, transparent), transparent 62%);
+  opacity: 0;
+  transition: opacity var(--duration-medium) var(--ease-standard);
+  pointer-events: none;
+}
+.mc-srv:hover {
+  transform: translateY(-0.25rem);
+  border-color: color-mix(in srgb, var(--server-accent) 75%, transparent);
+  box-shadow: 0 2.5rem 5rem -2.25rem var(--server-accent);
+}
+.mc-srv:hover::before {
+  opacity: 1;
+}
+.mc-srv--lead {
+  grid-row: span var(--rows, 2);
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(15rem, 1fr) auto;
+}
+/* Обложка — небо и мир сервера; к тексту она растворяется, без жёсткой границы. */
+.mc-srv__art {
+  position: relative;
+  min-height: 12rem;
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, black 62%, transparent);
+}
+.mc-srv__poster {
+  position: absolute;
+  inset: 0 -6% 0 -10%;
+  transition: transform var(--duration-slow) var(--ease-standard);
+}
+.mc-srv:hover .mc-srv__poster {
+  transform: scale(1.05);
+}
+.mc-srv--lead .mc-srv__art {
+  mask-image: linear-gradient(180deg, black 66%, transparent);
+}
+.mc-srv--lead .mc-srv__poster {
+  inset: 0;
+}
+.mc-srv__body {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  align-content: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-5) var(--spacing-6);
+  min-width: 0;
+}
+.mc-srv--lead .mc-srv__body {
+  margin-block-start: calc(-1 * var(--spacing-10));
+  padding: 0 var(--spacing-8) var(--spacing-8);
+}
+.mc-srv__policy {
+  margin: 0;
+  display: flex;
+  gap: var(--spacing-2);
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+.mc-srv__policy svg {
+  flex: none;
+  margin-block-start: 0.125rem;
+  color: var(--server-accent);
+}
+.mc-srv__top {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  min-width: 0;
+}
+.mc-srv__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--mc-r-btn);
+  border: 1px solid color-mix(in srgb, var(--server-accent) 55%, transparent);
+  background: color-mix(in srgb, var(--server-accent) 16%, transparent);
+  color: var(--server-accent);
+}
+.mc-srv__pack {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--server-accent);
+  overflow-wrap: anywhere;
+}
+.mc-srv__name {
+  margin: 0;
+  font-family: var(--font-family-heading);
+  font-size: clamp(1.25rem, 1rem + 0.9vw, 1.75rem);
+  font-weight: 700;
+  line-height: 1.1;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+.mc-srv--lead .mc-srv__name {
+  font-size: clamp(1.75rem, 1.2rem + 2vw, 2.75rem);
+}
+.mc-srv__name a {
+  color: var(--color-text-primary);
+  text-decoration: none;
+}
+.mc-srv__name a:hover {
+  color: var(--server-accent);
+}
+.mc-srv__tagline {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+.mc-srv__status {
+  display: grid;
+  gap: var(--spacing-2);
+}
+.mc-srv .mc-status {
+  font-size: 0.9375rem;
+}
+.mc-meter {
+  display: block;
+  max-width: 18rem;
+  height: 0.375rem;
+  border-radius: var(--radius-full);
+  background: var(--mc-glass-2);
+  overflow: hidden;
+}
+.mc-meter i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--server-accent), color-mix(in srgb, var(--server-accent) 55%, white));
+}
+.mc-srv__label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+.mc-srv__wipe {
+  display: grid;
+  gap: var(--spacing-2);
+}
+.mc-count {
+  display: inline-flex;
+  gap: var(--spacing-2);
+}
+.mc-count__cell {
+  display: grid;
+  justify-items: center;
+  min-width: 3.75rem;
+  padding: var(--spacing-2) var(--spacing-2);
+  border: 1px solid color-mix(in srgb, var(--server-accent) 40%, transparent);
+  border-radius: var(--mc-r-tile);
+  background: color-mix(in srgb, var(--mc-night) 55%, transparent);
+}
+.mc-count__value {
+  font-family: var(--font-family-heading);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.mc-count__unit {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+.mc-srv__meta,
+.mc-srv__mods {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+}
+.mc-srv__meta li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1-5);
+  padding: var(--spacing-1-5) var(--spacing-3);
+  border: 1px solid var(--mc-line);
+  border-radius: var(--mc-r-btn);
+  background: color-mix(in srgb, var(--mc-night) 45%, transparent);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.mc-srv__meta svg {
+  flex: none;
+  color: var(--server-accent);
+}
+.mc-srv__mods li {
+  padding: var(--spacing-0-5) var(--spacing-3);
+  border: 1px solid color-mix(in srgb, var(--server-accent) 40%, transparent);
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--server-accent) 10%, transparent);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.mc-srv__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-4);
+  margin-block-start: var(--spacing-1);
+}
+.mc-srv__more {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  color: var(--color-text-primary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+.mc-srv__addr {
+  margin-inline-start: auto;
+  display: grid;
+  font-family: var(--font-family-code);
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+}
+
+/* ================= 05 · новости ================= */
+.mc-sec--news {
+  background-image: radial-gradient(44rem 26rem at 50% 0%, color-mix(in srgb, var(--mc-cta-face) 9%, transparent), transparent 70%);
+}
+.mc-news {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-5);
+}
+.mc-news__item {
+  --server-accent: var(--mc-cta-face);
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  border: 1px solid var(--mc-line);
+  border-radius: var(--mc-r-xl);
+  background: linear-gradient(180deg, var(--mc-glass-2), var(--mc-glass));
+  overflow: hidden;
+  transition:
+    transform var(--duration-medium) var(--ease-standard),
+    border-color var(--duration-medium) var(--ease-standard),
+    box-shadow var(--duration-medium) var(--ease-standard);
+}
+.mc-news__item:hover,
+.mc-news__item:focus-within {
+  transform: translateY(-0.25rem);
+  border-color: color-mix(in srgb, var(--server-accent) 65%, transparent);
+  box-shadow: 0 2rem 4rem -2.25rem var(--server-accent);
+}
+.mc-news--solo {
+  grid-template-columns: minmax(0, 1fr);
+}
+.mc-news--solo .mc-news__item {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  grid-template-rows: none;
+}
+.mc-news__art {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+}
+.mc-news__poster {
+  position: absolute;
+  inset: 4% 0 -12%;
+  transition: transform var(--duration-slow) var(--ease-standard);
+}
+.mc-news__poster--wide {
+  inset: auto 0 0;
+  height: 78%;
+}
+.mc-news__poster--wide img {
+  object-fit: cover;
+  object-position: 50% 100%;
+}
+.mc-news__item:hover .mc-news__poster {
+  transform: scale(1.06);
+}
+.mc-news__shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, color-mix(in srgb, var(--mc-night) 62%, transparent), transparent 52%);
+}
+.mc-news__date {
+  position: absolute;
+  inset-block-start: var(--spacing-4);
+  inset-inline-start: var(--spacing-4);
+  display: grid;
+  justify-items: center;
+  min-width: 3.5rem;
+  padding: var(--spacing-2) var(--spacing-3);
+  border: 1px solid var(--mc-line-2);
+  border-radius: var(--mc-r-tile);
+  background: color-mix(in srgb, var(--mc-night) 72%, transparent);
+  backdrop-filter: blur(0.625rem);
+}
+.mc-news__day {
+  font-family: var(--font-family-heading);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.05;
+}
+.mc-news__month {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mc-cta-top);
+}
+.mc-news__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  padding: var(--spacing-5) var(--spacing-6) var(--spacing-6);
+}
+.mc-news__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+}
+.mc-news__title {
+  margin: 0;
+  font-family: var(--font-family-heading);
+  font-size: 1.1875rem;
+  font-weight: 600;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+.mc-news__title a {
+  color: var(--color-text-primary);
+  text-decoration: none;
+}
+/* Вся карточка — одна ссылка. */
+.mc-news__title a::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+.mc-news__when {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--mc-cta-top);
+}
+.mc-news__text {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.mc-news__more {
+  margin-block-start: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1-5);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--mc-cta-top);
+}
+.mc-news__all a {
+  position: relative;
+  height: 100%;
+  min-height: 14rem;
+  box-sizing: border-box;
+  display: grid;
+  align-content: end;
+  gap: var(--spacing-2);
+  padding: var(--spacing-6);
+  border: 1px dashed color-mix(in srgb, var(--mc-cta-top) 50%, transparent);
+  border-radius: var(--mc-r-xl);
+  background: color-mix(in srgb, var(--mc-cta-face) 7%, transparent);
+  color: var(--color-text-primary);
+  text-decoration: none;
+  transition: background-color var(--duration-medium) var(--ease-standard), transform var(--duration-medium) var(--ease-standard);
+}
+.mc-news__all a:hover {
+  background: color-mix(in srgb, var(--mc-cta-face) 14%, transparent);
+  transform: translateY(-0.25rem);
+}
+.mc-news__all-art {
+  position: absolute;
+  inset-inline-start: var(--spacing-6);
+  inset-block-start: var(--spacing-6);
+  color: color-mix(in srgb, var(--mc-cta-top) 22%, transparent);
+}
+.mc-news__all-title {
+  font-family: var(--font-family-heading);
+  font-size: 1.625rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+.mc-news__all-text {
+  color: var(--color-text-secondary);
+}
+.mc-news__all-go {
+  position: absolute;
+  inset-block-start: var(--spacing-6);
+  inset-inline-end: var(--spacing-6);
+  display: grid;
+  place-items: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: var(--radius-full);
+  background: linear-gradient(180deg, var(--mc-cta-top), var(--mc-cta-face));
+  color: var(--mc-cta-text);
+}
+
+/* ================= 06 · вопросы ================= */
+.mc-sec--faq {
+  background-image: radial-gradient(40rem 28rem at 12% 70%, color-mix(in srgb, var(--mc-cta-face) 12%, transparent), transparent 70%);
+}
+.mc-faq-grid {
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  align-items: start;
+  gap: clamp(2rem, 1rem + 4vw, 5rem);
+}
+.mc-faq-side {
+  display: grid;
+  gap: var(--spacing-6);
+  justify-items: start;
+}
+.mc-faq-side__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-3);
+}
+.mc-fox {
+  position: relative;
+  width: min(100%, 20rem);
+  aspect-ratio: 1;
+}
+.mc-fox__glow {
+  position: absolute;
+  inset: 16%;
+  border-radius: var(--radius-full);
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--mc-cta-face) 50%, transparent), transparent);
+  filter: blur(1.5rem);
+}
+.mc-fox__art {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.mc-fox__chip {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid var(--mc-line-2);
+  border-radius: var(--mc-r-tile);
+  background: color-mix(in srgb, var(--mc-night) 75%, transparent);
+  backdrop-filter: blur(0.5rem);
+  color: var(--mc-cta-top);
+}
+.mc-fox__chip--a { inset-block-start: 6%; inset-inline-end: 8%; }
+.mc-fox__chip--b { inset-block-start: 38%; inset-inline-start: 0; }
+.mc-faq {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--spacing-3);
+}
+.mc-faq__item {
+  border: 1px solid var(--mc-line);
+  border-radius: var(--mc-r-card);
+  background: linear-gradient(180deg, var(--mc-glass-2), var(--mc-glass));
+  transition:
+    border-color var(--duration-medium) var(--ease-standard),
+    background-color var(--duration-medium) var(--ease-standard),
+    box-shadow var(--duration-medium) var(--ease-standard);
+}
+.mc-faq__item:hover {
+  border-color: var(--mc-line-2);
+}
+.mc-faq__item--on,
+.mc-faq__item--on:hover {
+  border-color: color-mix(in srgb, var(--mc-cta-top) 55%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--mc-cta-face) 12%, transparent), var(--mc-glass));
+  box-shadow: 0 1.5rem 3rem -2.25rem var(--mc-cta-face);
+}
+.mc-faq__q {
+  margin: 0;
+  font: inherit;
+}
+.mc-faq__q button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-4);
+  min-height: 4rem;
+  padding: var(--spacing-3) var(--spacing-4) var(--spacing-3) var(--spacing-6);
+  border: 0;
+  border-radius: inherit;
+  background: none;
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: start;
+  cursor: pointer;
+}
+.mc-faq__plus {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--mc-line-2);
+  border-radius: var(--radius-full);
+  background: var(--mc-glass);
+  transition:
+    transform var(--duration-medium) var(--ease-standard),
+    background-color var(--duration-medium) var(--ease-standard),
+    color var(--duration-medium) var(--ease-standard);
+}
+.mc-faq__item--on .mc-faq__plus {
+  transform: rotate(45deg);
+  border-color: transparent;
+  background: var(--mc-cta-face);
+  color: var(--mc-cta-text);
+}
+/* Ответ раскрывается плавно: высота строки сетки меняется от 0 до содержимого. */
+.mc-faq__a {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--duration-medium) var(--ease-standard);
+}
+.mc-faq__item--on .mc-faq__a {
+  grid-template-rows: 1fr;
+}
+.mc-faq__a-inner {
+  display: grid;
+  justify-items: start;
+  min-height: 0;
+  padding-inline: var(--spacing-6);
+  overflow: hidden;
+}
+.mc-faq__a-inner p {
+  margin: 0 0 var(--spacing-5);
+  max-width: 42rem;
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+}
+.mc-faq__a-inner .mc-arrow-link {
+  margin-block: calc(-1 * var(--spacing-3)) var(--spacing-3);
+}
+
+/* ================= финал ================= */
+.mc-final {
+  position: relative;
+  padding: clamp(1rem, 2vw, 2rem) clamp(0.75rem, 2vw, 2rem) clamp(1.5rem, 3vw, 3rem);
+  background: var(--mc-night);
+}
+.mc-final__panel {
+  --edge: var(--mc-cta-top);
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  justify-items: center;
+  align-items: start;
+  min-height: clamp(36rem, 62vw, 52rem);
+  border-radius: clamp(1.5rem, 3vw, 2.5rem);
+  box-shadow: 0 3rem 6rem -3.5rem var(--mc-cta-face);
+  overflow: hidden;
+}
+.mc-final__sun {
+  position: absolute;
+  inset-inline-start: 50%;
+  inset-block-end: 16%;
+  width: 62%;
+  aspect-ratio: 2;
+  transform: translateX(-50%);
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--mc-cta-top) 60%, transparent), transparent);
+  filter: blur(2rem);
+}
+.mc-final__motes {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+.mc-final__art {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 0;
+  height: 52%;
+}
+.mc-final__art img {
+  object-fit: cover;
+  object-position: 50% 100%;
+}
+.mc-final__hero {
+  position: absolute;
+  z-index: 2;
+  inset-inline-start: clamp(-1rem, 4vw, 6rem);
+  inset-block-end: -5%;
+  width: clamp(13rem, 26vw, 23rem);
+  aspect-ratio: 1;
+}
+.mc-final .mc-foliage {
+  z-index: 3;
+  filter: blur(0.4375rem) brightness(0.36) saturate(0.8);
+}
+.mc-final__copy {
+  position: relative;
+  z-index: 4;
+  display: grid;
+  justify-items: center;
+  gap: var(--spacing-5);
+  max-width: 62rem;
+  padding: clamp(3rem, 6vw, 5.5rem) var(--spacing-6) 0;
+  text-align: center;
+}
+.mc-final__title {
+  margin: 0;
+  font-family: var(--font-family-heading);
+  font-size: clamp(2rem, 1rem + 4.4vw, 4.75rem);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+  color: white;
+}
+.mc-final__lead {
+  margin: 0;
+  font-size: clamp(1rem, 0.9rem + 0.4vw, 1.25rem);
+  line-height: 1.5;
+  color: color-mix(in srgb, white 84%, transparent);
+}
+.mc-final__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--spacing-3);
+}
+.mc-final .mc-btn {
+  background: color-mix(in srgb, var(--mc-night) 55%, transparent);
+  backdrop-filter: blur(0.625rem);
+}
+
+/* ---------- закреплённая кнопка (телефон) ---------- */
+.mc-sticky {
+  display: none;
+}
+
+/* ================= адаптация ================= */
+@media (max-width: 68rem) {
+  .mc-start,
+  .mc-acc,
+  .mc-cabt,
+  .mc-faq-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .mc-stage {
+    max-width: 44rem;
+    width: 100%;
+    margin-inline: auto;
+  }
+  .mc-orbit {
+    max-width: 32rem;
+  }
+  .mc-cabt__stage {
+    min-height: 20rem;
+  }
+  .mc-cabt__hero {
+    width: min(70%, 17rem);
+  }
+  .mc-bento {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .mc-srv--lead {
+    grid-row: auto;
+  }
+  .mc-news {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .mc-faq-side {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+  .mc-faq-side > :first-child,
+  .mc-faq-side__links {
+    grid-column: 1;
+  }
+  .mc-fox {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    width: clamp(9rem, 26vw, 16rem);
+  }
+}
+@media (max-width: 48rem) {
+  .mc-sec {
+    padding: var(--spacing-10) var(--spacing-4);
+  }
+  .mc-sec--stats {
+    padding-block: var(--spacing-8) 0;
+  }
+  .mc-sec--cab {
+    padding-block: var(--spacing-4);
+  }
+  .mc-head {
+    align-items: stretch;
+  }
+  .mc-head > .mc-btn {
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .mc-ticker {
+    height: 5.5rem;
+    margin-block: -1.75rem -1rem;
+  }
+  .mc-ticker__band {
+    padding-block: var(--spacing-2);
+  }
+  .mc-ticker__item {
+    font-size: 0.8125rem;
+    gap: 1.25rem;
+  }
+  .mc-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--spacing-3);
+  }
+  .mc-stat {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--spacing-2);
+    padding: var(--spacing-4);
+  }
+  .mc-stat__icon {
+    grid-row: auto;
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+  .mc-step {
+    gap: var(--spacing-3);
+    padding: var(--spacing-3) var(--spacing-4);
+  }
+  .mc-step__icon {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+  .mc-step__title {
+    font-size: 1rem;
+  }
+  .mc-step__text {
+    font-size: 0.875rem;
+  }
+  /* На телефоне окно стоит прямо и становится выше: экран помещается целиком. */
+  .mc-win,
+  .mc-stage:hover .mc-win {
+    transform: none;
+    aspect-ratio: 1 / 1.02;
+    border-radius: 1rem;
+  }
+  .mc-stage {
+    padding-block-end: 6.5rem;
+  }
+  .mc-stage__ledge {
+    inset-inline-start: 42%;
+    width: 60%;
+  }
+  .mc-stage__note {
+    max-width: 40%;
+  }
+  .mc-win__body--install {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: start;
+    padding: 1.4em 1.6em;
+  }
+  .mc-inst__logo {
+    width: 5.5em;
+    height: 5.5em;
+    border-radius: 1.4em;
+  }
+  .mc-inst__logo svg {
+    width: 3em;
+    height: 3em;
+  }
+  .mc-inst__list {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.5em;
+    width: 100%;
+  }
+  .mc-inst__list span {
+    padding: 0.6em 0.9em;
+  }
+  .mc-win__body--reg {
+    --cx: 80%;
+    --cy: 84%;
+    grid-template-columns: minmax(0, 1fr);
+    padding: 1.2em 1.6em;
+  }
+  .mc-reg__mail {
+    display: none;
+  }
+  .mc-play__servers {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.4em;
+  }
+  .mc-play__srv {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    padding: 0.45em 0.8em;
+  }
+  .mc-play__srv i {
+    grid-row: auto;
+  }
+  .mc-play__banner {
+    min-height: 6.5em;
+  }
+  .mc-win__btn--play {
+    padding-inline: 1.6em;
+  }
+  .mc-acc__row {
+    padding: var(--spacing-3) var(--spacing-4);
+  }
+  .mc-orbit {
+    max-width: 22rem;
+  }
+  .mc-orbit__chip {
+    font-size: 0.75rem;
+    padding-inline-end: var(--spacing-2);
+  }
+  .mc-orbit__chip-icon {
+    width: 1.625rem;
+    height: 1.625rem;
+  }
+  /* На узком экране у миров на орбите остаётся значок: названия есть в списке серверов ниже. */
+  .mc-orbit__chip--world {
+    padding: var(--spacing-1);
+  }
+  .mc-orbit__chip-name,
+  .mc-orbit__uuid {
+    display: none;
+  }
+  .mc-cabt {
+    padding: var(--spacing-5);
+    border-radius: var(--mc-r-card);
+  }
+  .mc-cabt__stage {
+    min-height: 17rem;
+  }
+  .mc-cabt__tiles {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .mc-cabt__tiles li {
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: var(--spacing-3);
+    align-items: center;
+  }
+  .mc-cabt__icon {
+    grid-row: span 2;
+  }
+  .mc-cabt__actions,
+  .mc-acc__actions,
+  .mc-final__actions {
+    width: 100%;
+  }
+  .mc-cabt__actions .mc-btn,
+  .mc-acc__actions .mc-btn,
+  .mc-final__actions .mc-btn,
+  .mc-faq-side__links .mc-btn {
+    flex: 1 1 100%;
+    box-sizing: border-box;
+  }
+  .mc-srv,
+  .mc-srv--lead {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    border-radius: var(--mc-r-card);
+  }
+  .mc-srv__art {
+    min-height: 11rem;
+  }
+  .mc-srv--lead .mc-srv__art {
+    min-height: 14rem;
+  }
+  .mc-srv__art,
+  .mc-srv--lead .mc-srv__art {
+    mask-image: linear-gradient(180deg, black 62%, transparent);
+  }
+  .mc-srv__poster,
+  .mc-srv--lead .mc-srv__poster {
+    inset: 0;
+  }
+  .mc-srv__body,
+  .mc-srv--lead .mc-srv__body {
+    margin-block-start: calc(-1 * var(--spacing-8));
+    padding: 0 var(--spacing-5) var(--spacing-5);
+  }
+  .mc-srv__foot .mc-btn {
+    flex: 1;
+  }
+  .mc-srv__addr {
+    margin-inline-start: 0;
+    flex-basis: 100%;
+  }
+  .mc-count {
+    width: 100%;
+  }
+  .mc-count__cell {
+    flex: 1;
+    min-width: 0;
+  }
+  /* Новости на телефоне — лента с защёлкиванием: следующая карточка видна с края. */
+  .mc-news {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: min(84vw, 22rem);
+    gap: var(--spacing-3);
+    margin-inline: calc(-1 * var(--spacing-4));
+    padding-inline: var(--spacing-4);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: var(--spacing-4);
+    scrollbar-width: none;
+  }
+  .mc-news > li {
+    scroll-snap-align: start;
+  }
+  .mc-news--solo {
+    grid-auto-columns: minmax(0, 1fr);
+  }
+  .mc-news--solo .mc-news__item {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  .mc-news__item {
+    border-radius: var(--mc-r-card);
+  }
+  .mc-faq__q button {
+    min-height: 3.5rem;
+    padding-inline: var(--spacing-4) var(--spacing-3);
+    font-size: 1rem;
+  }
+  .mc-faq__a-inner {
+    padding-inline: var(--spacing-4);
+  }
+  .mc-final {
+    padding-inline: var(--spacing-2);
+  }
+  .mc-final__panel {
+    min-height: 36rem;
+  }
+  .mc-final__art {
+    height: 40%;
+  }
+  .mc-final__hero {
+    inset-inline-start: -2rem;
+    inset-block-end: -4%;
+    width: 13rem;
+  }
+  .mc-final__copy {
+    padding: var(--spacing-10) var(--spacing-4) 0;
+  }
+  .mc-foliage {
+    width: 9rem;
+  }
+  /* На узком экране дуги света идут под текстом, поэтому они тише. */
+  .mc-arcs {
+    opacity: 0.45;
+  }
+  .mc-foliage--bl,
+  .mc-foliage--br {
+    inset-block-end: -4rem;
+  }
+  .mc-sticky {
+    display: block;
+    position: fixed;
+    inset-inline: var(--spacing-4);
+    inset-block-end: calc(var(--spacing-4) + env(safe-area-inset-bottom, 0px));
+    z-index: 40;
+    transform: translateY(170%);
+    transition: transform var(--duration-medium) var(--ease-standard);
+  }
+  .mc-sticky--on {
+    transform: none;
+  }
+  .mc-sticky .mc-cta {
+    box-shadow:
+      inset 0 2px 0 color-mix(in srgb, white 55%, transparent),
+      inset 0 -4px 0 var(--mc-cta-bottom),
+      0 1rem 2rem color-mix(in srgb, black 55%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mc-arcs__run,
+  .mc-win__cursor {
+    display: none;
+  }
+  .mc-win,
+  .mc-stage:hover .mc-win {
+    transition: none;
+  }
+  .mc-win__body,
+  .mc-win__btn,
+  .mc-inst__bar i,
+  .mc-play__syncbar i,
+  .mc-inst__state-a,
+  .mc-inst__state-b,
+  .mc-inst__list span,
+  .mc-reg__mail,
+  .mc-field__caret,
+  .mc-orbit__glow,
+  .mc-cabt__halo,
+  .mc-step--run .mc-step__progress {
+    animation: none;
+  }
+  .mc-inst__state-a {
+    display: none;
+  }
+  .mc-orbit [class*='animate-orbit'],
+  .mc-ticker [class*='animate-marquee'] {
+    animation-play-state: paused;
+  }
+  .mc-stat,
+  .mc-step,
+  .mc-acc__row,
+  .mc-srv,
+  .mc-srv__poster,
+  .mc-news__item,
+  .mc-news__poster,
+  .mc-news__all a,
+  .mc-faq__a,
+  .mc-faq__plus,
+  .mc-sticky {
+    transition: none;
+  }
+  .mc-stat:hover,
+  .mc-acc__row:hover,
+  .mc-srv:hover,
+  .mc-news__item:hover,
+  .mc-news__all a:hover,
+  .mc-srv:hover .mc-srv__poster,
+  .mc-news__item:hover .mc-news__poster {
+    transform: none;
+  }
+}

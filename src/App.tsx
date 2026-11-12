@@ -9,7 +9,7 @@ import {themes, defaultThemeSlug} from './astryx-themes';
 import {RouterLink} from './app/RouterLink';
 import {LazyBoundary} from './components/LazyBoundary';
 import {Shell} from './app/Shell';
-import {keys} from './app/hooks';
+import {CABINET_ROOTS, keys} from './app/hooks';
 import {backend} from './data';
 import {Home} from './pages/Home';
 import {ServersPage} from './pages/Servers';
@@ -22,8 +22,16 @@ const ServerPage = lazy(() => import('./pages/Server').then(m => ({default: m.Se
 const RulesPage = lazy(() => import('./pages/Rules').then(m => ({default: m.RulesPage})));
 const NewsListPage = lazy(() => import('./pages/News').then(m => ({default: m.NewsListPage})));
 const NewsItemPage = lazy(() => import('./pages/News').then(m => ({default: m.NewsItemPage})));
-const AccountPage = lazy(() => import('./pages/Account').then(m => ({default: m.AccountPage})));
+// Кабинет игрока: каркас и разделы — отдельные файлы, грузятся при входе в кабинет.
+const AccountLayout = lazy(() => import('./pages/account/Layout').then(m => ({default: m.AccountLayout})));
+const OverviewPage = lazy(() => import('./pages/account/Overview').then(m => ({default: m.OverviewPage})));
+const ShopPage = lazy(() => import('./pages/account/Shop').then(m => ({default: m.ShopPage})));
+const RanksPage = lazy(() => import('./pages/account/Shop').then(m => ({default: m.RanksPage})));
+const WalletPage = lazy(() => import('./pages/account/Wallet').then(m => ({default: m.WalletPage})));
+const SettingsPage = lazy(() => import('./pages/account/Settings').then(m => ({default: m.SettingsPage})));
 const AdminPage = lazy(() => import('./pages/admin/Admin').then(m => ({default: m.AdminPage})));
+// Галерея сцен — рабочий инструмент: доступна только в режиме разработки.
+const ArtGallery = lazy(() => import('./pages/ArtGallery'));
 
 const queryClient = new QueryClient({
   defaultOptions: {queries: {retry: 1, staleTime: 15_000, refetchOnWindowFocus: true}},
@@ -36,6 +44,8 @@ function AuthSync() {
       backend.onAuthChange(() => {
         qc.invalidateQueries({queryKey: keys.account});
         qc.invalidateQueries({queryKey: keys.sessions});
+        // Баланс, заказы и ранг принадлежат игроку: при смене аккаунта перечитываются.
+        CABINET_ROOTS.forEach(root => qc.invalidateQueries({queryKey: [root]}));
       }),
     [qc],
   );
@@ -74,8 +84,15 @@ export function App() {
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/forgot" element={<ForgotPage />} />
                 <Route path="/reset" element={<ResetPage />} />
-                <Route path="/account" element={<AccountPage />} />
+                <Route path="/account" element={<AccountLayout />}>
+                  <Route index element={<OverviewPage />} />
+                  <Route path="shop" element={<ShopPage />} />
+                  <Route path="ranks" element={<RanksPage />} />
+                  <Route path="wallet" element={<WalletPage />} />
+                  <Route path="settings" element={<SettingsPage />} />
+                </Route>
                 <Route path="/admin" element={<AdminPage />} />
+                {import.meta.env.DEV ? <Route path="/art" element={<ArtGallery />} /> : null}
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>
               </Suspense>

@@ -8,7 +8,7 @@ import {TextInput} from '@astryxdesign/core/TextInput';
 import {VStack} from '@astryxdesign/core/VStack';
 import {useAccount, useInvalidate, useServers} from '../app/hooks';
 import {backend, isDemo} from '../data';
-import {DEMO_OWNER} from '../data/demoBackend';
+import {DEMO_OWNER, DEMO_PLAYER} from '../data/demoBackend';
 import {AppError, emailSchema, errorText, nickSchema, passwordSchema} from '../data/types';
 import {DemoMailbox} from '../components/DemoMailbox';
 import {Page} from '../components/Page';
@@ -204,7 +204,9 @@ export function LoginPage() {
   }, [confirmToken, setParams]);
 
   useEffect(() => {
-    if (account) navigate('/account', {replace: true});
+    // После входа игрок возвращается в раздел кабинета, из которого его отправили на вход.
+    const next = params.get('next');
+    if (account) navigate(next && next.startsWith('/account') ? next : '/account', {replace: true});
   }, [account, navigate]);
 
   async function submit() {
@@ -253,11 +255,32 @@ export function LoginPage() {
         </Text>
       </Form>
       {isDemo ? (
-        <Banner
-          status="info"
-          title="Демо-доступ в админку"
-          description={`Почта ${DEMO_OWNER.email}, пароль ${DEMO_OWNER.password}. Существует только в демо-режиме.`}
-        />
+        <VStack gap={3}>
+          <Banner
+            status="info"
+            title="Демо-игрок: кабинет, баланс и магазин"
+            description={`Почта ${DEMO_PLAYER.email}, пароль ${DEMO_PLAYER.password}. Существует только в демо-режиме.`}
+            endContent={
+              <Button
+                label="Войти как демо-игрок"
+                variant="secondary"
+                clickAction={async () => {
+                  try {
+                    await backend.signIn(DEMO_PLAYER.email, DEMO_PLAYER.password);
+                    await invalidate('account');
+                  } catch (e) {
+                    setError(errorText(e));
+                  }
+                }}
+              />
+            }
+          />
+          <Banner
+            status="info"
+            title="Демо-доступ в админку"
+            description={`Почта ${DEMO_OWNER.email}, пароль ${DEMO_OWNER.password}. Существует только в демо-режиме.`}
+          />
+        </VStack>
       ) : null}
     </Page>
   );

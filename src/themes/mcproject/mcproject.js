@@ -230,7 +230,16 @@ export const mcprojectTheme = {
     "--mc-cta-text": "#1A1406",
     "--mc-accent-techno": "#4FD1E0",
     "--mc-accent-magic": "#A78BFA",
-    "--mc-accent-survival": "#7CC96B"
+    "--mc-accent-survival": "#7CC96B",
+    "--mc-night": "#0B0D12",
+    "--mc-glass": "rgba(255, 255, 255, 0.045)",
+    "--mc-glass-2": "rgba(255, 255, 255, 0.08)",
+    "--mc-line": "rgba(255, 255, 255, 0.10)",
+    "--mc-line-2": "rgba(255, 255, 255, 0.2)",
+    "--mc-r-xl": "28px",
+    "--mc-r-card": "20px",
+    "--mc-r-tile": "14px",
+    "--mc-r-btn": "12px"
   },
   __localTokenOwners: {
     "--astryx-theme-neutral-color-status-fill-accent": "neutral",
@@ -245,7 +254,16 @@ export const mcprojectTheme = {
     "--mc-cta-text": "mcproject",
     "--mc-accent-techno": "mcproject",
     "--mc-accent-magic": "mcproject",
-    "--mc-accent-survival": "mcproject"
+    "--mc-accent-survival": "mcproject",
+    "--mc-night": "mcproject",
+    "--mc-glass": "mcproject",
+    "--mc-glass-2": "mcproject",
+    "--mc-line": "mcproject",
+    "--mc-line-2": "mcproject",
+    "--mc-r-xl": "mcproject",
+    "--mc-r-card": "mcproject",
+    "--mc-r-tile": "mcproject",
+    "--mc-r-btn": "mcproject"
   },
   __localTokenLineage: ["neutral","mcproject"],
   components: {

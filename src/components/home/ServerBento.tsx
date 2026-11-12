@@ -1,12 +1,13 @@
-import {useEffect, useState} from 'react';
+import {useEffect, useState, type CSSProperties, type PointerEvent} from 'react';
 import {Link} from 'react-router';
-import {ArrowRightIcon} from '@phosphor-icons/react';
+import {ArrowRightIcon, CalendarBlankIcon, GameControllerIcon, PuzzlePieceIcon} from '@phosphor-icons/react';
 import {BorderBeam} from '@/components/ui/border-beam';
-import {MagicCard} from '@/components/ui/magic-card';
 import {formatDateTime, serverAddress} from '../../app/format';
 import {deriveStatus, type DisplayStatus} from '../../data/status';
 import {LOADER_LABEL, type ServerView, type SiteSettings} from '../../data/types';
+import {SKY} from '../../scenes/meta';
 import {startPath} from '../CtaLink';
+import {SceneIcon} from '../sceneIcon';
 import {accentStyle, packLine} from '../ServerCard';
 import {StatusLine} from '../StatusLine';
 import {WorldPoster} from '../VoxelScene';
@@ -49,109 +50,118 @@ function Countdown({to}: {to: string}) {
   );
 }
 
-/** Заполненность сервера блоками. Показывается только при свежем снимке «онлайн». */
+/** Заполненность сервера. Показывается только при свежем снимке «онлайн». */
 function OnlineMeter({status}: {status: DisplayStatus}) {
   if (status.kind !== 'online' || status.players == null || !status.max) return null;
-  const cells = 16;
-  const filled = Math.min(cells, Math.round((status.players / status.max) * cells));
+  const share = Math.min(1, status.players / status.max);
   return (
     <span className="mc-meter" role="img" aria-label={`Занято ${status.players} из ${status.max} мест`}>
-      {Array.from({length: cells}, (_, i) => (
-        <i key={i} className={i < filled ? 'mc-meter__on' : undefined} />
-      ))}
+      <i style={{width: `${Math.max(4, Math.round(share * 100))}%`}} />
     </span>
   );
 }
 
-function Tile({server, settings, now, featured}: {server: ServerView; settings: SiteSettings; now: number; featured: boolean}) {
+/** Пятно света под указателем: координаты уходят в CSS-переменные, без перерисовки React. */
+function spotlight(e: PointerEvent<HTMLElement>) {
+  const r = e.currentTarget.getBoundingClientRect();
+  e.currentTarget.style.setProperty('--mx', `${e.clientX - r.left}px`);
+  e.currentTarget.style.setProperty('--my', `${e.clientY - r.top}px`);
+}
+
+function Tile({server, settings, now, featured, rows}: {server: ServerView; settings: SiteSettings; now: number; featured: boolean; rows: number}) {
   const status = deriveStatus(server, server.status, now);
   const wipeSoon = server.next_wipe_at && Date.parse(server.next_wipe_at) > now ? server.next_wipe_at : null;
-  // Размер названия подбирается по самому длинному слову, чтобы оно не рвалось посередине.
-  const longest = Math.max(4, ...server.name.split(/\s+/).map(w => w.length));
   const pack = server.modpack;
+  const scene = server.scene ?? 'survival';
+  const sky = SKY[scene];
+  const style: CSSProperties = {...accentStyle(server.accent), ...(featured ? {['--rows' as string]: rows} : {})};
   return (
-    <li className={`mc-tile2${featured ? ' mc-tile2--lead' : ''}`} style={{...accentStyle(server.accent), ['--name-len' as string]: longest}}>
-      <WorldPoster
-        world={server.scene ?? 'survival'}
-        className="mc-tile2__art"
-        width={featured ? 900 : 640}
-        height={featured ? 1000 : 640}
-        shot={{angle: featured ? 0.5 : 0.75, fit: featured ? 1.08 : 1.12}}
-      />
-      <MagicCard className="mc-tile2__card" gradientColor={`${server.accent}26`} gradientFrom={server.accent} gradientTo={server.accent} gradientSize={featured ? 420 : 280}>
-        <span className="mc-tile2__inner">
-          <span className="mc-tile2__head">
-            <span className="mc-tile2__pack">{packLine(server)}</span>
-            <h3 className="mc-tile2__name">
-              <Link to={`/servers/${server.slug}`}>{server.name}</Link>
-            </h3>
+    <li className={`mc-srv${featured ? ' mc-srv--lead' : ''}`} style={style} onPointerMove={spotlight}>
+      <span className="mc-srv__art" style={{background: `linear-gradient(180deg, ${sky[0]} 0%, ${sky[1]} 58%, ${sky[2]} 100%)`}} aria-hidden="true">
+        <WorldPoster
+          world={scene}
+          className="mc-srv__poster"
+          width={featured ? 1100 : 560}
+          height={featured ? 720 : 760}
+          shot={{angle: featured ? 0.5 : 0.75, lift: 0.2, fit: featured ? 0.86 : 0.98}}
+        />
+      </span>
+      <span className="mc-srv__body">
+        <span className="mc-srv__top">
+          <span className="mc-srv__icon">
+            <SceneIcon scene={scene} size={20} />
           </span>
-          {server.tagline ? <p className="mc-tile2__tagline">{server.tagline}</p> : null}
-          <span className="mc-tile2__status">
-            <StatusLine status={status} settings={settings} />
-            <OnlineMeter status={status} />
-          </span>
-          {featured && wipeSoon ? (
-            <span className="mc-tile2__wipe">
-              <span className="mc-tile2__label">До вайпа · {formatDateTime(wipeSoon, settings)}</span>
-              <Countdown to={wipeSoon} />
-            </span>
-          ) : (
-            <span className="mc-tile2__wipe">
-              <span className="mc-tile2__label">Вайп</span>
-              <span>{wipeSoon ? formatDateTime(wipeSoon, settings) : server.wipe_policy || 'Не указано'}</span>
-            </span>
-          )}
-          {server.key_mods.length > 0 ? (
-            <ul className="mc-tile2__mods" aria-label="Ключевые моды">
-              {server.key_mods.slice(0, featured ? 5 : 3).map(m => (
-                <li key={m}>{m}</li>
-              ))}
-              {server.mod_count > server.key_mods.length ? <li className="mc-tile2__more-mods">+{server.mod_count - server.key_mods.length}</li> : null}
-            </ul>
-          ) : null}
-          {featured ? (
-            <dl className="mc-tile2__facts">
-              {server.mode ? (
-                <div>
-                  <dt>Режим</dt>
-                  <dd>{server.mode}</dd>
-                </div>
-              ) : null}
-              {pack ? (
-                <div>
-                  <dt>Загрузчик</dt>
-                  <dd>
-                    {LOADER_LABEL[pack.loader]}
-                    {pack.java_version ? `, Java ${pack.java_version}` : ''}
-                  </dd>
-                </div>
-              ) : null}
-              {server.wipe_policy ? (
-                <div className="mc-tile2__fact--wide">
-                  <dt>Вайпы</dt>
-                  <dd>{server.wipe_policy}</dd>
-                </div>
-              ) : null}
-            </dl>
-          ) : null}
-          <span className="mc-tile2__foot">
-            <Link className="mc-tile2__go" to={startPath(server.slug)} aria-label={`Играть на «${server.name}»`}>
-              Играть <ArrowRightIcon size={18} weight="bold" aria-hidden="true" />
-            </Link>
-            <Link className="mc-tile2__more" to={`/servers/${server.slug}`} aria-label={`О сервере «${server.name}»`}>
-              О сервере
-            </Link>
-            {featured ? (
-              <span className="mc-tile2__addr">
-                <span className="mc-tile2__label">Адрес</span>
-                {serverAddress(server.host, server.port)}
-              </span>
-            ) : null}
-          </span>
+          <span className="mc-srv__pack">{packLine(server)}</span>
         </span>
-      </MagicCard>
-      {featured ? <BorderBeam size={160} duration={9} borderWidth={2} colorFrom={server.accent} colorTo="transparent" /> : null}
+        <h3 className="mc-srv__name">
+          <Link to={`/servers/${server.slug}`}>{server.name}</Link>
+        </h3>
+        {server.tagline ? <p className="mc-srv__tagline">{server.tagline}</p> : null}
+        <span className="mc-srv__status">
+          <StatusLine status={status} settings={settings} />
+          <OnlineMeter status={status} />
+        </span>
+        {featured && wipeSoon ? (
+          <span className="mc-srv__wipe">
+            <span className="mc-srv__label">До вайпа · {formatDateTime(wipeSoon, settings)}</span>
+            <Countdown to={wipeSoon} />
+          </span>
+        ) : null}
+        <ul className="mc-srv__meta">
+          {!featured && wipeSoon ? (
+            <li>
+              <CalendarBlankIcon size={16} weight="fill" aria-hidden="true" />
+              <span className="mc-srv__label">Вайп</span>
+              <span>{formatDateTime(wipeSoon, settings)}</span>
+            </li>
+          ) : null}
+          {pack ? (
+            <li>
+              <GameControllerIcon size={16} weight="fill" aria-hidden="true" />
+              <span className="mc-srv__label">Версия</span>
+              <span>
+                {pack.mc_version}
+                {featured ? ` · ${LOADER_LABEL[pack.loader]}${pack.java_version ? `, Java ${pack.java_version}` : ''}` : ''}
+              </span>
+            </li>
+          ) : null}
+          {server.mod_count > 0 ? (
+            <li>
+              <PuzzlePieceIcon size={16} weight="fill" aria-hidden="true" />
+              <span className="mc-srv__label">Модов</span>
+              <span>{server.mod_count}</span>
+            </li>
+          ) : null}
+        </ul>
+        {!wipeSoon && server.wipe_policy ? (
+          <p className="mc-srv__policy">
+            <CalendarBlankIcon size={16} weight="fill" aria-hidden="true" />
+            {server.wipe_policy}
+          </p>
+        ) : null}
+        {server.key_mods.length > 0 ? (
+          <ul className="mc-srv__mods" aria-label="Ключевые моды">
+            {server.key_mods.slice(0, featured ? 5 : 3).map(m => (
+              <li key={m}>{m}</li>
+            ))}
+          </ul>
+        ) : null}
+        <span className="mc-srv__foot">
+          <Link className="mc-btn mc-btn--accent" to={startPath(server.slug)} aria-label={`Играть на «${server.name}»`}>
+            Играть <ArrowRightIcon size={18} weight="bold" aria-hidden="true" />
+          </Link>
+          <Link className="mc-srv__more" to={`/servers/${server.slug}`} aria-label={`О сервере «${server.name}»`}>
+            О сервере
+          </Link>
+          {featured ? (
+            <span className="mc-srv__addr">
+              <span className="mc-srv__label">Адрес</span>
+              {serverAddress(server.host, server.port)}
+            </span>
+          ) : null}
+        </span>
+      </span>
+      {featured ? <BorderBeam size={180} duration={10} borderWidth={2} colorFrom={server.accent} colorTo="transparent" /> : null}
     </li>
   );
 }
@@ -164,9 +174,9 @@ export function ServerBento({servers, settings, now}: {servers: ServerView[]; se
   const lead = withWipe ?? servers[0];
   const ordered = [lead, ...servers.filter(s => s.id !== lead.id)];
   return (
-    <ul className="mc-bento">
+    <ul className={`mc-bento${ordered.length === 1 ? ' mc-bento--solo' : ''}`}>
       {ordered.map(s => (
-        <Tile key={s.id} server={s} settings={settings} now={now} featured={s.id === lead.id} />
+        <Tile key={s.id} server={s} settings={settings} now={now} featured={s.id === lead.id} rows={Math.max(1, ordered.length - 1)} />
       ))}
     </ul>
   );

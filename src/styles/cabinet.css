@@ -1,0 +1,1025 @@
+/*
+ * Кабинет игрока: каркас с разделами, сцена персонажа, магазин, ранги, баланс.
+ * Грузится вместе с кабинетом. Язык тот же: стекло, свет, золото; цвета — из темы.
+ * --tier — цвет ранга игрока (пьедестал, аура, подсветка), задаётся каркасом.
+ */
+.mc-cab {
+  --tier: var(--color-text-secondary);
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: 17rem minmax(0, 1fr);
+  align-items: start;
+  gap: clamp(1.5rem, 1rem + 2vw, 3rem);
+  min-height: 72vh;
+  /* Раздел занимает всю ширину, а содержимое держится в колонке 86rem за счёт полей. */
+  padding: clamp(1.5rem, 1rem + 2vw, 3rem) max(clamp(1rem, 4vw, 3rem), calc((100% - 86rem) / 2)) var(--spacing-12);
+  box-sizing: border-box;
+  /* Фон кабинета: ночь и два мягких пятна света. */
+  background:
+    radial-gradient(46rem 30rem at 88% 0%, color-mix(in srgb, var(--mc-accent-magic) 16%, transparent), transparent 70%),
+    radial-gradient(40rem 28rem at 4% 100%, color-mix(in srgb, var(--mc-cta-face) 12%, transparent), transparent 70%),
+    var(--mc-night);
+}
+
+/* ---------- боковая панель ---------- */
+.mc-cab__side {
+  position: sticky;
+  inset-block-start: 5.5rem;
+  display: grid;
+  gap: var(--spacing-4);
+  padding: var(--spacing-4);
+  border: 1px solid var(--mc-line);
+  border-radius: var(--mc-r-card);
+  background: linear-gradient(180deg, var(--mc-glass-2), var(--mc-glass));
+  backdrop-filter: blur(0.875rem);
+}
+.mc-cab__me {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--spacing-3);
+  padding-block-end: var(--spacing-4);
+  border-block-end: 1px solid var(--mc-line);
+}
+.mc-cab__ava {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--mc-r-tile);
+  background: linear-gradient(160deg, var(--tier), color-mix(in srgb, var(--tier) 45%, var(--mc-night)));
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--tier) 60%, transparent),
+    0 0.75rem 1.5rem -0.75rem var(--tier);
+  color: var(--mc-cta-text);
+  font-family: var(--font-family-heading);
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+.mc-cab__who {
+  display: grid;
+  min-width: 0;
+}
+.mc-cab__nick {
+  font-family: var(--font-family-heading);
+  font-weight: 600;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mc-cab__rank {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mc-cab__balance {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+  padding: var(--spacing-2) var(--spacing-3);
+  border: 1px solid color-mix(in srgb, var(--mc-cta-top) 38%, transparent);
+  border-radius: var(--mc-r-btn);
+  background: color-mix(in srgb, var(--mc-cta-face) 10%, transparent);
+}
+.mc-cab__nav {
+  display: grid;
+  gap: var(--spacing-1);
+}
+.mc-cab__link,
+.mc-cab__out {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  min-height: 2.75rem;
+  padding-inline: var(--spacing-3);
+  border: 0;
+  border-radius: var(--mc-r-btn);
+  background: none;
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+}
+.mc-cab__link:hover,
+.mc-cab__out:hover {
+  background: var(--mc-glass-2);
+  color: var(--color-text-primary);
+}
+.mc-cab__link--on,
+.mc-cab__link--on:hover {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--mc-cta-face) 22%, transparent), color-mix(in srgb, var(--mc-cta-face) 6%, transparent));
+  box-shadow: inset 0.1875rem 0 0 var(--mc-cta-top);
+  color: var(--color-text-primary);
+}
+.mc-cab__link--on svg {
+  color: var(--mc-cta-top);
+}
+.mc-cab__demo {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
+
+/* ---------- содержимое раздела ---------- */
+.mc-cab__main {
+  display: grid;
+  align-content: start;
+  gap: var(--spacing-6);
+  min-width: 0;
+}
+.mc-cab__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--spacing-4);
+}
+.mc-cab__title {
+  margin: 0;
+  font-family: var(--font-family-heading);
+  font-size: clamp(1.75rem, 1.3rem + 1.6vw, 2.75rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  overflow-wrap: anywhere;
+}
+.mc-cab__lead {
+  margin: var(--spacing-2) 0 0;
+  max-width: 40rem;
+  color: var(--color-text-secondary);
+}
+.mc-coins {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1-5);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--color-text-primary);
+}
+.mc-coins svg {
+  flex: none;
+  color: var(--mc-cta-top);
+}
+.mc-coins__unit {
+  font-size: 0.8125em;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+.mc-coins--lg {
+  font-family: var(--font-family-heading);
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+.mc-panel {
+  display: grid;
+  gap: var(--spacing-4);
+  padding: var(--spacing-5) var(--spacing-6);
+  border: 1px solid var(--mc-line);
+  border-radius: var(--mc-r-card);
+  background: linear-gradient(180deg, var(--mc-glass-2), var(--mc-glass));
+  min-width: 0;
+}
+.mc-panel__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-3);
+}
+.mc-panel__title {
+  margin: 0;
+  font-family: var(--font-family-heading);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+.mc-panel__empty {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+.mc-block {
+  display: block;
+  width: 100%;
+}
+.mc-table {
+  display: block;
+  overflow-x: auto;
+}
+/* Узкому экрану таблица не сжимается до нечитаемых столбцов, а прокручивается вбок. */
+.mc-table table {
+  min-width: 34rem;
+}
+.mc-plus {
+  font-weight: 700;
+  color: var(--color-text-success);
+}
+.mc-minus {
+  font-weight: 700;
+}
+
+/* ================= обзор ================= */
+.mc-ov {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: var(--spacing-5);
+}
+.mc-ov__stage {
+  --edge: var(--tier);
+  position: relative;
+  min-height: 31rem;
+  border: 1px solid var(--mc-line);
+  border-radius: var(--mc-r-xl);
+  background:
+    radial-gradient(60% 46% at 50% 66%, color-mix(in srgb, var(--tier) 30%, transparent), transparent 72%),
+    radial-gradient(90% 60% at 50% 112%, color-mix(in srgb, var(--mc-accent-magic) 26%, transparent), transparent 70%),
+    linear-gradient(180deg, var(--mc-glass-2), var(--mc-glass));
+  box-shadow: 0 3rem 6rem -3.75rem var(--tier);
+  overflow: hidden;
+}
+.mc-ov__halo {
+  position: absolute;
+  inset-inline-start: 50%;
+  inset-block-end: 9%;
+  width: 62%;
+  aspect-ratio: 3;
+  transform: translateX(-50%);
+  border-radius: var(--radius-full);
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--tier) 75%, transparent), transparent);
+  filter: blur(1.125rem);
+}
+/* Сцену можно вращать: по горизонтали — поворот, по вертикали страница прокручивается как обычно. */
+.mc-ov__scene {
+  cursor: grab;
+  touch-action: pan-y;
+}
+.mc-ov__scene:active {
+  cursor: grabbing;
+}
+.mc-ov__badge,
+.mc-ov__hint {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-1-5) var(--spacing-3);
+  border: 1px solid var(--mc-line-2);
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--mc-night) 72%, transparent);
+  backdrop-filter: blur(0.625rem);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.mc-ov__badge {
+  inset-block-start: var(--spacing-4);
+  inset-inline-start: var(--spacing-4);
+  border-color: color-mix(in srgb, var(--tier) 60%, transparent);
+}
+.mc-ov__badge svg {
+  color: var(--tier);
+}
+.mc-ov__hint {
+  inset-block-end: var(--spacing-4);
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+.mc-ov__side {
+  display: grid;
+  align-content: start;
+  gap: var(--spacing-4);
+  min-width: 0;
+}
+.mc-ov__looks {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--spacing-2);
+}
+.mc-ov__look {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: var(--spacing-0-5);
+  padding: var(--spacing-2) var(--spacing-1) var(--spacing-3);
+  border: 1px solid var(--mc-line);
+  border-radius: var(--mc-r-tile);
+  background: var(--mc-glass);
+  color: var(--color-text-primary);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard),
+    transform var(--duration-fast) var(--ease-standard);
+}
+.mc-ov__look:hover {
+  border-color: var(--mc-line-2);
+  background: var(--mc-glass-2);
+  transform: translateY(-0.125rem);
+}
+.mc-ov__look--on,
+.mc-ov__look--on:hover {
+  border-color: color-mix(in srgb, var(--mc-cta-top) 70%, transparent);
+  background: color-mix(in srgb, var(--mc-cta-face) 13%, transparent);
+  box-shadow: 0 1rem 2rem -1.25rem var(--mc-cta-face);
+}
+.mc-ov__look-art {
+  width: 100%;
+  max-width: 5.5rem;
+  aspect-ratio: 4 / 5;
+}
+.mc-ov__look-name {
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+.mc-ov__look-hint {
+  font-size: 0.6875rem;
+  line-height: 1.3;
+  color: var(--color-text-secondary);
+}
+.mc-ov__note {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+.mc-ov__cards {
+  display: grid;
+  gap: var(--spacing-3);
+}
+.mc-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--spacing-3);
+  padding: var(--spacing-4) var(--spacing-5);
+  border: 1px solid var(--mc-line);
+  border-radius: var(--mc-r-card);
+  background: linear-gradient(180deg, var(--mc-glass-2), var(--mc-glass));
+  color: var(--color-text-primary);
+  text-decoration: none;
+  transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
+}
+.mc-card:hover {
+  border-color: color-mix(in srgb, var(--mc-cta-top) 55%, transparent);
+  transform: translateY(-0.125rem);
+}
+.mc-card__icon {
+  grid-row: 1 / span 2;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid color-mix(in srgb, var(--mc-cta-face) 40%, transparent);
+  border-radius: var(--mc-r-btn);
+  background: color-mix(in srgb, var(--mc-cta-face) 12%, transparent);
+  color: var(--mc-cta-top);
+}
+.mc-card--tier .mc-card__icon {
+  border-color: color-mix(in srgb, var(--tier) 55%, transparent);
+  background: color-mix(in srgb, var(--tier) 16%, transparent);
+  color: var(--tier);
+}
+.mc-card__label {
+  grid-column: 2;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+.mc-card__value {
+  grid-column: 2;
+  font-family: var(--font-family-heading);
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.mc-card__status {
+  grid-column: 2 / -1;
+  margin-block-start: var(--spacing-1);
+  font-size: 0.875rem;
+}
+.mc-card__go {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1-5);
+  max-width: 11rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-align: end;
+  color: var(--mc-cta-top);
+}
+.mc-card__go svg {
+  flex: none;
+}
+.mc-orders {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+.mc-orders__row {
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr) auto auto;
+  align-items: center;
+  column-gap: var(--spacing-4);
+  padding-block: var(--spacing-3);
+  border-block-start: 1px solid var(--mc-line);
+}
+.mc-orders__row:first-child {
+  border-block-start: 0;
+  padding-block-start: 0;
+}
+.mc-orders__icon {
+  grid-row: 1 / span 2;
+  width: 3rem;
+  height: 3rem;
+}
+.mc-orders__title {
+  font-weight: 700;
+}
+.mc-orders__meta {
+  grid-column: 2;
+  grid-row: 2;
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+.mc-orders__row > .mc-chip,
+.mc-orders__row > .mc-coins {
+  grid-row: 1 / span 2;
+}
+
+/* ================= магазин ================= */
+.mc-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+}
+.mc-filter {
+  min-height: 2.75rem;
+  padding-inline: var(--spacing-4);
+  border: 1px solid var(--mc-line-2);
+  border-radius: var(--radius-full);
+  background: var(--mc-glass);
+  color: var(--color-text-primary);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
+}
+.mc-filter:hover {
+  background: var(--mc-glass-2);
+}
+.mc-filter--on,
+.mc-filter--on:hover {
+  border-color: transparent;
+  background: linear-gradient(180deg, var(--mc-cta-top), var(--mc-cta-face));
+  color: var(--mc-cta-text);
+}
+.mc-prods {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15.5rem, 1fr));
+  gap: var(--spacing-4);
+}
+.mc-prod {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  padding: var(--spacing-4);
+  border: 1px solid var(--mc-line);
+  border-radius: var(--mc-r-card);
+  background: linear-gradient(180deg, var(--mc-glass-2), var(--mc-glass));
+  transition:
+    transform var(--duration-medium) var(--ease-standard),
+    border-color var(--duration-medium) var(--ease-standard),
+    box-shadow var(--duration-medium) var(--ease-standard);
+}
+.mc-prod:hover {
+  transform: translateY(-0.25rem);
+  border-color: color-mix(in srgb, var(--server-accent, var(--mc-cta-top)) 60%, transparent);
+  box-shadow: 0 2rem 4rem -2.5rem var(--server-accent, var(--mc-cta-face));
+}
+.mc-prod__art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 10;
+  margin-block-end: var(--spacing-2);
+  border: 1px solid var(--mc-line);
+  border-radius: var(--mc-r-tile);
+  background:
+    radial-gradient(closest-side, color-mix(in srgb, var(--server-accent, var(--mc-cta-face)) 24%, transparent), transparent 78%),
+    color-mix(in srgb, var(--mc-night) 50%, transparent);
+  overflow: hidden;
+}
+.mc-prod__glow {
+  position: absolute;
+  inset-block-end: 12%;
+  width: 46%;
+  height: 12%;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--server-accent, var(--mc-cta-face)) 65%, transparent);
+  filter: blur(0.75rem);
+}
+.mc-prod__icon {
+  position: absolute;
+  inset-block: 6%;
+  inset-inline-start: 50%;
+  aspect-ratio: 1;
+  translate: -50% 0;
+  transition: transform var(--duration-medium) var(--ease-standard);
+}
+.mc-prod:hover .mc-prod__icon {
+  transform: translateY(-0.25rem) scale(1.07) rotate(-3deg);
+}
+.mc-prod__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-1-5);
+  min-height: 1.625rem;
+}
+.mc-prod__title {
+  margin: 0;
+  font-family: var(--font-family-heading);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.mc-prod__text {
+  flex: 1;
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+.mc-prod__server {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1-5);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--server-accent, var(--color-text-secondary));
+}
+.mc-prod__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-3);
+  margin-block-start: var(--spacing-2);
+  padding-block-start: var(--spacing-3);
+  border-block-start: 1px solid var(--mc-line);
+}
+.mc-btn--buy,
+.mc-btn--buy:hover {
+  border-color: transparent;
+  background: linear-gradient(180deg, var(--mc-cta-top), var(--mc-cta-face));
+  box-shadow: inset 0 -0.1875rem 0 var(--mc-cta-bottom);
+  color: var(--mc-cta-text);
+  font-family: var(--font-family-heading);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.mc-btn--buy:hover {
+  filter: brightness(1.07);
+}
+/* Недоступное действие меняет поверхность и цвет надписи, без общей прозрачности. */
+.mc-btn[aria-disabled='true'],
+.mc-btn[aria-disabled='true']:hover {
+  border-color: var(--color-border-emphasized);
+  background: var(--mc-surface-raised);
+  box-shadow: none;
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+  filter: none;
+  transform: none;
+}
+.mc-buy__icon {
+  flex: none;
+  width: 5rem;
+  height: 5rem;
+}
+.mc-buy__done {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3) var(--spacing-4);
+  border: 1px solid color-mix(in srgb, var(--mc-status-online) 45%, transparent);
+  border-radius: var(--mc-r-tile);
+  background: color-mix(in srgb, var(--mc-status-online) 12%, transparent);
+  font-weight: 600;
+}
+.mc-buy__done svg {
+  flex: none;
+  color: var(--color-text-success);
+}
+
+/* ================= ранги ================= */
+.mc-ranks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-4);
+}
+.mc-rank {
+  --edge: var(--tier);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  padding: var(--spacing-5);
+  border: 1px solid color-mix(in srgb, var(--tier) 30%, var(--mc-line));
+  border-radius: var(--mc-r-xl);
+  background:
+    radial-gradient(110% 44% at 50% 0%, color-mix(in srgb, var(--tier) 24%, transparent), transparent 72%),
+    linear-gradient(180deg, var(--mc-glass-2), var(--mc-glass));
+  transition: transform var(--duration-medium) var(--ease-standard), box-shadow var(--duration-medium) var(--ease-standard);
+}
+.mc-rank:hover,
+.mc-rank--on {
+  box-shadow: 0 2.5rem 5rem -2.75rem var(--tier);
+}
+.mc-rank:hover {
+  transform: translateY(-0.25rem);
+}
+.mc-rank__art {
+  position: relative;
+  display: grid;
+  place-items: end center;
+  height: 15rem;
+}
+.mc-rank__halo {
+  position: absolute;
+  inset-block-end: 3%;
+  width: 72%;
+  aspect-ratio: 3;
+  border-radius: var(--radius-full);
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--tier) 75%, transparent), transparent);
+  filter: blur(0.875rem);
+}
+.mc-rank__hero {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 50%;
+  aspect-ratio: 4 / 5;
+  translate: -50% 0;
+}
+.mc-rank__flag {
+  position: absolute;
+  inset-block-start: var(--spacing-4);
+  inset-inline-end: var(--spacing-4);
+  padding: var(--spacing-0-5) var(--spacing-3);
+  border-radius: var(--radius-full);
+  background: var(--tier);
+  color: var(--mc-cta-text);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.mc-rank__title {
+  margin: 0;
+  font-family: var(--font-family-heading);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+.mc-rank__text {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+.mc-rank__price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--spacing-2);
+}
+.mc-rank__term {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+.mc-rank__perks {
+  flex: 1;
+  list-style: none;
+  margin: 0;
+  padding: var(--spacing-3) 0 0;
+  border-block-start: 1px solid var(--mc-line);
+  display: grid;
+  align-content: start;
+  gap: var(--spacing-2);
+}
+.mc-rank__perks li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--spacing-2);
+  font-size: 0.9375rem;
+  line-height: 1.4;
+}
+.mc-rank__perks svg {
+  margin-block-start: 0.1875rem;
+  color: var(--tier);
+}
+.mc-rank__buy {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ================= баланс ================= */
+.mc-wallet {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--spacing-4);
+}
+.mc-wallet__hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--spacing-4);
+  min-height: 15rem;
+  padding: var(--spacing-5) var(--spacing-6);
+  border: 1px solid var(--mc-line);
+  border-radius: var(--mc-r-xl);
+  background:
+    radial-gradient(70% 90% at 18% 50%, color-mix(in srgb, var(--mc-cta-face) 22%, transparent), transparent 72%),
+    linear-gradient(180deg, var(--mc-glass-2), var(--mc-glass));
+  box-shadow: 0 3rem 6rem -3.75rem var(--mc-cta-face);
+  overflow: hidden;
+}
+.mc-wallet__glow {
+  position: absolute;
+  inset-inline-start: 3%;
+  inset-block-start: 50%;
+  width: 12rem;
+  aspect-ratio: 1;
+  transform: translateY(-50%);
+  border-radius: var(--radius-full);
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--mc-cta-face) 50%, transparent), transparent);
+  filter: blur(1.125rem);
+}
+.mc-wallet__coin {
+  position: relative;
+  width: clamp(7rem, 13vw, 11rem);
+  aspect-ratio: 1;
+}
+.mc-wallet__sum {
+  position: relative;
+  display: grid;
+  min-width: 0;
+}
+.mc-wallet__label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+.mc-wallet__value {
+  font-family: var(--font-family-heading);
+  font-size: clamp(2.5rem, 2rem + 2.4vw, 4rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(180deg, var(--mc-cta-top), var(--mc-cta-face));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  overflow-wrap: anywhere;
+}
+.mc-wallet__unit {
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+.mc-topup {
+  display: grid;
+  align-content: start;
+  gap: var(--spacing-3);
+  padding: var(--spacing-5) var(--spacing-6);
+  border: 1px solid var(--mc-line);
+  border-radius: var(--mc-r-xl);
+  background: linear-gradient(180deg, var(--mc-glass-2), var(--mc-glass));
+}
+.mc-topup .mc-cta {
+  justify-self: start;
+}
+.mc-topup__legal {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+.mc-settings {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: var(--spacing-4);
+}
+
+/* ================= адаптация ================= */
+@media (max-width: 72rem) {
+  .mc-ov,
+  .mc-wallet,
+  .mc-settings {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .mc-ranks {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* Ранг в одну колонку: персонаж слева, условия справа. */
+  .mc-rank {
+    display: grid;
+    grid-template-columns: 9rem minmax(0, 1fr);
+    column-gap: var(--spacing-4);
+    align-items: start;
+  }
+  .mc-rank__art {
+    grid-row: 1 / span 4;
+    height: 12rem;
+  }
+  .mc-rank__perks,
+  .mc-rank__buy {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 60rem) {
+  .mc-cab {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--spacing-4);
+    padding: var(--spacing-4) var(--spacing-4) calc(6.5rem + env(safe-area-inset-bottom, 0px));
+  }
+  .mc-cab__side {
+    position: static;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--spacing-3);
+    padding: var(--spacing-3);
+    /* Размытие фона сделало бы карточку опорой для закреплённой панели разделов: панель встала бы внутри неё. */
+    backdrop-filter: none;
+  }
+  .mc-cab__me {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    padding: 0;
+    border: 0;
+  }
+  .mc-cab__balance {
+    grid-column: auto;
+  }
+  .mc-cab__out span,
+  .mc-cab__demo {
+    grid-column: 1 / -1;
+  }
+  /* Разделы — закреплённая панель снизу: до неё дотягивается большой палец. */
+  .mc-cab__nav {
+    position: fixed;
+    z-index: 45;
+    inset-inline: var(--spacing-3);
+    inset-block-end: calc(var(--spacing-3) + env(safe-area-inset-bottom, 0px));
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 0;
+    padding: var(--spacing-1);
+    border: 1px solid var(--mc-line-2);
+    border-radius: var(--mc-r-card);
+    background: color-mix(in srgb, var(--mc-night) 88%, transparent);
+    backdrop-filter: blur(1rem);
+    box-shadow: 0 1rem 2.5rem color-mix(in srgb, black 60%, transparent);
+  }
+  .mc-cab__link {
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--spacing-0-5);
+    min-height: 3.5rem;
+    padding: var(--spacing-1);
+    border-radius: var(--mc-r-tile);
+    font-size: 0.6875rem;
+  }
+  .mc-cab__link--on,
+  .mc-cab__link--on:hover {
+    box-shadow: none;
+    background: color-mix(in srgb, var(--mc-cta-face) 18%, transparent);
+  }
+  .mc-ov__stage {
+    min-height: 25rem;
+  }
+  /* Панель разделов не закрывает подвал с обязательной пометкой. */
+  .mc-cab ~ .mc-footer {
+    padding-block-end: 6rem;
+  }
+}
+@media (max-width: 40rem) {
+  .mc-cab__balance {
+    grid-column: 1 / -1;
+  }
+  .mc-cab__me {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .mc-ov__look-hint {
+    display: none;
+  }
+  .mc-card {
+    grid-template-columns: auto minmax(0, 1fr);
+    padding: var(--spacing-3) var(--spacing-4);
+  }
+  .mc-card__go {
+    grid-column: 2;
+    grid-row: auto;
+    max-width: none;
+    margin-block-start: var(--spacing-1);
+    text-align: start;
+  }
+  .mc-panel,
+  .mc-topup,
+  .mc-wallet__hero {
+    padding: var(--spacing-4);
+  }
+  .mc-orders__row {
+    grid-template-columns: 2.5rem minmax(0, 1fr) auto;
+    column-gap: var(--spacing-3);
+  }
+  .mc-orders__icon {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+  .mc-orders__row > .mc-chip {
+    grid-column: 2 / -1;
+    grid-row: 3;
+    justify-self: start;
+    margin-block-start: var(--spacing-1);
+  }
+  /* Товар на телефоне — строка: иконка слева, описание справа, цена и кнопка снизу. */
+  .mc-prods {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--spacing-3);
+  }
+  .mc-prod {
+    display: grid;
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+    column-gap: var(--spacing-3);
+    row-gap: var(--spacing-1);
+    align-items: start;
+    padding: var(--spacing-3);
+  }
+  .mc-prod__art {
+    grid-row: 1 / span 4;
+    aspect-ratio: 1;
+    margin: 0;
+  }
+  .mc-prod__tags {
+    min-height: 0;
+  }
+  .mc-prod__tags:empty {
+    display: none;
+  }
+  .mc-prod__foot {
+    grid-column: 1 / -1;
+    flex-wrap: nowrap;
+  }
+  .mc-rank {
+    grid-template-columns: 6.5rem minmax(0, 1fr);
+    padding: var(--spacing-4);
+  }
+  .mc-rank__art {
+    height: 9rem;
+  }
+  .mc-topup .mc-cta {
+    justify-self: stretch;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mc-ov__look,
+  .mc-card,
+  .mc-prod,
+  .mc-prod__icon,
+  .mc-rank {
+    transition: none;
+  }
+  .mc-ov__look:hover,
+  .mc-card:hover,
+  .mc-prod:hover,
+  .mc-prod:hover .mc-prod__icon,
+  .mc-rank:hover {
+    transform: none;
+  }
+}

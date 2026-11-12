@@ -16,19 +16,20 @@ import {TextInput} from '@astryxdesign/core/TextInput';
 import {VStack} from '@astryxdesign/core/VStack';
 import {
   isStaffAdmin, keys, useAccount, useGallery, useInvalidate, useMods, useModpacks, useNews,
-  useNotify, useRules, useServers, useSettings,
+  useNotify, useProducts, useRules, useServers, useSettings,
 } from '../../app/hooks';
-import {formatDateTime} from '../../app/format';
+import {formatDateTime, formatNumber} from '../../app/format';
 import {backend} from '../../data';
 import type {GalleryMeta} from '../../data/backend';
 import {
-  LOADER_LABEL, NEWS_KIND_LABEL, REDISTRIBUTION_LABEL, STAFF_ROLE_LABEL, errorText, modSchema,
-  modpackSchema, newsSchema, serverSchema, siteSettingsSchema,
-  type AuditEntry, type GalleryItem, type Mod, type Modpack, type NewsItem, type Server,
+  COMPLIANCE_LABEL, LOADER_LABEL, NEWS_KIND_LABEL, REDISTRIBUTION_LABEL, STAFF_ROLE_LABEL, errorText, modSchema,
+  modpackSchema, newsSchema, productSchema, serverSchema, siteSettingsSchema,
+  type AuditEntry, type GalleryItem, type Mod, type Modpack, type NewsItem, type Product, type Server,
   type SiteSettings, type StaffEntry, type StaffRole,
 } from '../../data/types';
 import {Async, Page} from '../../components/Page';
-import {SCENE_LABEL} from '../../scenes/worlds';
+import {ITEM_ICON_LABEL, SCENE_LABEL} from '../../scenes/meta';
+import {z} from 'zod';
 import {CrudTab} from './Crud';
 
 const opts = (labels: Record<string, string>) => Object.entries(labels).map(([value, label]) => ({value, label}));
@@ -562,6 +563,10 @@ const SETTINGS_FIELDS: {name: keyof SiteSettings; label: string; description?: s
   {name: 'telegram_url', label: 'Telegram (https://)'},
   {name: 'vk_url', label: 'ВКонтакте (https://)'},
   {name: 'contact_email', label: 'Почта для связи'},
+  {name: 'currency_name', label: 'Внутренняя валюта: название', description: 'Например, «Искры». Показывается в кабинете и магазине.'},
+  {name: 'currency_one', label: 'Валюта: форма для 1', description: 'Например, «искра».'},
+  {name: 'currency_few', label: 'Валюта: форма для 2–4', description: 'Например, «искры».'},
+  {name: 'currency_many', label: 'Валюта: форма для 5 и больше', description: 'Например, «искр».'},
 ];
 
 function SettingsTab() {
@@ -657,6 +662,73 @@ function AuditTab() {
   );
 }
 
+type ProductForm = Omit<Product, 'perks'> & {perks: string};
+// В форме бонусы ранга вводятся по одному в строке; в каталоге хранятся списком.
+const productFormSchema = productSchema.extend({perks: z.string().max(2400)}) as unknown as z.ZodType<ProductForm>;
+
+function ProductsTab() {
+  const products = useProducts(true);
+  const servers = useServers(true).data ?? [];
+  const invalidate = useInvalidate();
+  return (
+    <Async query={products}>
+      {rows => (
+        <CrudTab<ProductForm>
+          title="Товары и ранги"
+          hint="Цена указывается во внутренней валюте. Покупатель видит только опубликованные товары."
+          addLabel="Добавить товар"
+          rows={rows.map(p => ({...p, perks: p.perks.join('\n')}))}
+          schema={productFormSchema}
+          describe={r => r.title}
+          extra={
+            <Banner
+              status="warning"
+              title="Перед подключением оплаты сверьте каталог с правилами Mojang"
+              description="Раздел «Servers and hosting» в Minecraft Usage Guidelines. Товары с отметкой «Игровой предмет» и «Не проверено» могут нарушать правила. Плащи и азартные механики не продаются, платный доступ к серверу стоит одинаково для всех."
+            />
+          }
+          makeNew={() => ({
+            id: crypto.randomUUID(), slug: '', kind: 'item', title: '', description: '', price: 100, server_id: null, mod_name: '',
+            icon: 'chest', tier: 0, duration_days: null, perks: '', compliance: 'unchecked', sort: rows.length + 1, published: false,
+          })}
+          save={async r => {
+            await backend.saveContent('products', {...r, perks: r.perks.split('\n').map(x => x.trim()).filter(Boolean)});
+            await invalidate('products');
+          }}
+          remove={async id => {
+            await backend.deleteContent('products', id);
+            await invalidate('products');
+          }}
+          columns={[
+            {key: 'title', header: 'Товар', render: r => r.title},
+            {key: 'kind', header: 'Тип', render: r => (r.kind === 'item' ? 'Предмет' : `Ранг ${r.tier}`)},
+            {key: 'price', header: 'Цена', render: r => formatNumber(r.price)},
+            {key: 'server', header: 'Сервер', render: r => (r.kind === 'privilege' ? 'Все' : (servers.find(s => s.id === r.server_id)?.name ?? 'Любой'))},
+            {key: 'compliance', header: 'Проверка', render: r => COMPLIANCE_LABEL[r.compliance]},
+            {key: 'state', header: 'Состояние', render: r => (r.published ? 'Опубликован' : 'Черновик')},
+          ]}
+          fields={[
+            {name: 'title', label: 'Название', type: 'text'},
+            {name: 'slug', label: 'Код товара (slug)', type: 'text', description: 'Строчные латинские буквы, цифры и дефис.'},
+            {name: 'kind', label: 'Тип', type: 'select', options: [{value: 'item', label: 'Предмет'}, {value: 'privilege', label: 'Ранг (привилегия)'}]},
+            {name: 'description', label: 'Описание', type: 'textarea'},
+            {name: 'price', label: 'Цена во внутренней валюте', type: 'number'},
+            {name: 'server_id', label: 'Сервер выдачи', type: 'select', nullable: true, options: servers.map(s => ({value: s.id, label: s.name})), description: 'Пусто — покупатель выбирает сервер сам. Для ранга оставьте пустым.'},
+            {name: 'mod_name', label: 'Мод', type: 'text', description: 'Из какого мода предмет. Можно оставить пустым.'},
+            {name: 'icon', label: 'Иконка', type: 'select', options: opts(ITEM_ICON_LABEL)},
+            {name: 'tier', label: 'Ступень ранга', type: 'number', description: 'Для ранга — от 1 до 3, для предмета — 0.'},
+            {name: 'duration_days', label: 'Срок ранга, дней', type: 'number', nullable: true},
+            {name: 'perks', label: 'Бонусы ранга', type: 'textarea', description: 'По одному в строке.'},
+            {name: 'compliance', label: 'Проверка по правилам Mojang', type: 'select', options: opts(COMPLIANCE_LABEL), description: 'Отметку ставит владелец после сверки с действующим текстом правил.'},
+            {name: 'sort', label: 'Порядок', type: 'number'},
+            {name: 'published', label: 'Опубликован', type: 'switch'},
+          ]}
+        />
+      )}
+    </Async>
+  );
+}
+
 const TABS = [
   {value: 'servers', label: 'Серверы', el: <ServersTab />},
   {value: 'modpacks', label: 'Сборки и моды', el: <ModpacksTab />},
@@ -672,6 +744,8 @@ export function AdminPage() {
   const account = useAccount();
   const [tab, setTab] = useState('servers');
   const allowed = isStaffAdmin(account.data);
+  // Вкладка товаров есть только там, где работает магазин.
+  const tabs = backend.shop ? [...TABS.slice(0, 3), {value: 'products', label: 'Товары', el: <ProductsTab />}, ...TABS.slice(3)] : TABS;
   return (
     <Page title="Админка">
       <Async query={account}>
@@ -688,12 +762,12 @@ export function AdminPage() {
           ) : (
             <VStack gap={6}>
               <TabList value={tab} onChange={setTab} role="tablist">
-                {TABS.map(t => (
+                {tabs.map(t => (
                   <Tab key={t.value} value={t.value} label={t.label} panelId="admin-panel" />
                 ))}
               </TabList>
-              <VStack gap={0} id="admin-panel" role="tabpanel" aria-label={TABS.find(t => t.value === tab)?.label}>
-                {TABS.find(t => t.value === tab)?.el}
+              <VStack gap={0} id="admin-panel" role="tabpanel" aria-label={tabs.find(t => t.value === tab)?.label}>
+                {tabs.find(t => t.value === tab)?.el}
               </VStack>
             </VStack>
           )

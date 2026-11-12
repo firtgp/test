@@ -1,6 +1,6 @@
 import type {
-  Account, AuditEntry, ContentRow, ContentTable, GalleryItem, Mod, Modpack, NewsItem,
-  RulesVersion, ServerView, SessionEntry, SiteSettings, StaffEntry, StaffRole,
+  Account, ActivePrivilege, AuditEntry, ContentRow, ContentTable, GalleryItem, LedgerEntry, Mod, Modpack,
+  NewsItem, Order, Product, RulesVersion, ServerView, SessionEntry, SiteSettings, StaffEntry, StaffRole,
 } from './types';
 
 export interface GalleryMeta {
@@ -67,6 +67,23 @@ export interface Backend {
   grantRole(nick: string, role: StaffRole, serverId: string | null): Promise<void>;
   revokeRole(id: string): Promise<void>;
   listAudit(): Promise<AuditEntry[]>;
+
+  // ---------- кабинет: образ, валюта, магазин, привилегии ----------
+  /** Доступны ли магазин и баланс. В этой версии серверной части у них нет: работают только в демо. */
+  readonly shop: boolean;
+  setAvatarStyle(style: Account['avatar_style']): Promise<void>;
+  listProducts(includeUnpublished?: boolean): Promise<Product[]>;
+  getWallet(): Promise<number>;
+  listLedger(): Promise<LedgerEntry[]>;
+  listOrders(): Promise<Order[]>;
+  getPrivilege(): Promise<ActivePrivilege | null>;
+  /**
+   * Покупка за внутреннюю валюту. Цена берётся из каталога. Ключ идемпотентности защищает
+   * от двойного списания при повторе запроса.
+   */
+  purchase(productId: string, serverId: string | null, key: string): Promise<Order>;
+  /** Только демо: пополнение без денег. */
+  demoTopUp?(amount: number): Promise<void>;
 
   /** Только демо: «почтовый ящик» с письмами подтверждения и сброса. */
   demoMailbox?(): DemoMail[];

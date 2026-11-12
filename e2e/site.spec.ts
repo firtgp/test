@@ -117,7 +117,9 @@ test.describe('аккаунт', () => {
 
     await login(page, 'steve@example.org');
     await expect(page).toHaveURL(/\/account$/);
-    await expect(page.getByText('Steve_2026').first()).toBeVisible();
+    await expect(page.getByRole('heading', {level: 1})).toHaveText('Привет, Steve_2026');
+    await page.getByRole('navigation', {name: 'Разделы кабинета'}).getByRole('link', {name: 'Настройки'}).click();
+    await expect(page).toHaveURL(/\/account\/settings$/);
     await expect(page.getByText('(подтверждена)')).toBeVisible();
 
     await page.getByRole('combobox', {name: 'Сервер по умолчанию'}).click();
@@ -131,7 +133,7 @@ test.describe('аккаунт', () => {
     await page.reload();
     await expect(page.getByRole('link', {name: 'Steve_2026'})).toBeVisible();
     await page.goto('/account');
-    await page.getByRole('button', {name: 'Выйти из аккаунта'}).click();
+    await page.getByRole('button', {name: 'Выйти', exact: true}).click();
     await expect(page.getByRole('link', {name: 'Войти'})).toBeVisible();
   });
 
@@ -204,6 +206,7 @@ test.describe('аккаунт', () => {
     await confirmFromMail(page);
     await login(page, 'nick@example.org');
     await expect(page).toHaveURL(/\/account$/);
+    await page.goto('/account/settings');
     const uuid = await page.locator('.mc-mono').first().textContent();
     expect(uuid).toMatch(/^[0-9a-f-]{36}$/);
     await page.getByLabel('Ник в игре').fill('NewNick_1');
@@ -221,6 +224,8 @@ test.describe('аккаунт', () => {
     await register(page, 'PassChanger', 'pc@example.org');
     await confirmFromMail(page);
     await login(page, 'pc@example.org');
+    await expect(page).toHaveURL(/\/account$/);
+    await page.goto('/account/settings');
     await page.getByLabel('Текущий пароль').fill('not-the-password');
     await page.getByLabel('Новый пароль').fill('another-good-pass-1');
     await page.getByRole('button', {name: 'Сменить пароль'}).click();
@@ -231,8 +236,9 @@ test.describe('аккаунт', () => {
   });
 
   test('кабинет закрыт без входа', async ({page}) => {
-    await page.goto('/account');
-    await expect(page).toHaveURL(/\/login$/);
+    // Гостя отправляют на вход и запоминают, в какой раздел он шёл.
+    await page.goto('/account/shop');
+    await expect(page).toHaveURL(/\/login\?next=%2Faccount%2Fshop$/);
   });
 });
 
@@ -240,9 +246,9 @@ test.describe('админка', () => {
   test('закрыта для гостя и обычного игрока', async ({page}) => {
     await page.goto('/admin');
     await expect(page.getByText('Войдите, чтобы открыть админку')).toBeVisible();
-    await register(page, 'JustPlayer', 'player@example.org');
+    await register(page, 'JustPlayer', 'justplayer@example.org');
     await confirmFromMail(page);
-    await login(page, 'player@example.org');
+    await login(page, 'justplayer@example.org');
     await expect(page).toHaveURL(/\/account$/);
     await page.goto('/admin');
     await expect(page.getByText('Недостаточно прав')).toBeVisible();
@@ -365,6 +371,8 @@ test.describe('адаптация и доступность', () => {
   });
 
   test('клавиатура: фокус виден на главной кнопке, форма отправляется по Enter', async ({page}) => {
+    // Обход клавишей Tab идёт по одному шагу; в среде без видеокарты три живые сцены замедляют каждый шаг.
+    test.setTimeout(90_000);
     await page.goto('/');
     const cta = page.getByRole('link', {name: 'Начать играть'}).first();
     for (let i = 0; i < 30 && !(await cta.evaluate(el => el === document.activeElement)); i++) {
@@ -429,10 +437,17 @@ test.describe('адаптация и доступность', () => {
 
     await page.getByRole('button', {name: /Войдите в лаунчер/}).click();
     await expect(page.getByRole('button', {name: /Войдите в лаунчер/})).toHaveAttribute('aria-current', 'step');
-    await expect(page.locator('.mc-mock__caption')).toHaveText('Лаунчер');
+    // В окне — экран входа в лаунчер; подпись прямо говорит, что это схема.
+    await expect(page.locator('.mc-win .mc-login')).toBeVisible();
+    await expect(page.getByText('Схема шагов. Экран вашего лаунчера может выглядеть иначе.')).toBeVisible();
 
-    await page.getByRole('button', {name: 'Потеряю ли я вещи, если сменю ник?'}).click();
+    const question = page.getByRole('button', {name: 'Потеряю ли я вещи, если сменю ник?'});
+    await expect(question).toHaveAttribute('aria-expanded', 'false');
+    await question.click();
+    await expect(question).toHaveAttribute('aria-expanded', 'true');
     await expect(page.getByText('привязаны к постоянному UUID игрока')).toBeVisible();
+    // Открыт один ответ: первый вопрос закрылся.
+    await expect(page.getByRole('button', {name: 'Можно ли играть с телефона?'})).toHaveAttribute('aria-expanded', 'false');
   });
 
   test('телефон: закреплённая кнопка появляется после первого экрана', async ({browser}) => {
@@ -452,16 +467,16 @@ test.describe('адаптация и доступность', () => {
     await page.goto('/');
     // Блоки ниже первого экрана грузятся отдельным файлом — ждём их, затем листаем страницу, как человек:
     // постеры рисуются по мере приближения к экрану.
-    await expect(page.locator('.mc-final')).toBeAttached();
+    await expect(page.locator('.mc-final')).toBeAttached({timeout: 15000});
     const height = await page.evaluate(() => document.documentElement.scrollHeight);
     for (let y = 0; y < height; y += 600) {
       await page.evaluate(v => window.scrollTo(0, v), y);
       await page.waitForTimeout(150);
     }
-    // Узел аккаунта, три карточки серверов, новость и финальная панорама.
-    await expect.poll(() => page.locator('.mc-poster--ready').count(), {timeout: 15000}).toBeGreaterThanOrEqual(6);
-    const img = page.locator('.mc-final .mc-poster--ready img');
-    await expect(img).toBeVisible();
+    // Куб аккаунта, персонаж кабинета, три карточки серверов, новости, лис и финальная панорама.
+    await expect.poll(() => page.locator('.mc-poster--ready').count(), {timeout: 30000}).toBeGreaterThanOrEqual(8);
+    const img = page.locator('.mc-final__art.mc-poster--ready img');
+    await expect(img).toBeVisible({timeout: 30000});
     expect(await img.evaluate((el: HTMLImageElement) => el.naturalWidth)).toBe(2000);
   });
   test('сбой загрузки блоков не роняет сайт: первый экран работает, есть «Повторить»', async ({page}) => {
@@ -472,5 +487,99 @@ test.describe('адаптация и доступность', () => {
     await expect(page.getByRole('button', {name: 'Повторить'})).toBeVisible();
     await page.getByRole('link', {name: 'Начать играть'}).first().click();
     await expect(page).toHaveURL(/\/start$/);
+  });
+});
+
+test.describe('кабинет игрока (демо)', () => {
+  async function demoPlayer(page: Page) {
+    await page.goto('/login');
+    await page.getByRole('button', {name: 'Войти как демо-игрок'}).click();
+    await expect(page).toHaveURL(/\/account$/);
+  }
+
+  test('обзор: персонаж, образ, баланс и разделы', async ({page}) => {
+    await demoPlayer(page);
+    await expect(page.getByRole('heading', {level: 1})).toHaveText('Привет, DemoPlayer');
+    // Сцена персонажа управляется и мышью, и клавиатурой.
+    await expect(page.getByRole('img', {name: /Трёхмерная модель персонажа/})).toBeVisible();
+    const nav = page.getByRole('navigation', {name: 'Разделы кабинета'});
+    for (const name of ['Обзор', 'Магазин', 'Ранги', 'Баланс', 'Настройки']) {
+      await expect(nav.getByRole('link', {name})).toBeVisible();
+    }
+    await expect(page.getByLabel('Баланс').first()).toContainText(/1\s200/);
+    // Образ переключается и сохраняется.
+    const mage = page.getByRole('radio', {name: /Маг/});
+    await mage.click();
+    await expect(mage).toHaveAttribute('aria-checked', 'true');
+    await page.reload();
+    await expect(page.getByRole('radio', {name: /Маг/})).toHaveAttribute('aria-checked', 'true');
+  });
+
+  test('магазин: покупка списывает цену каталога один раз и честно показывает статус', async ({page}) => {
+    await demoPlayer(page);
+    await page.goto('/account/shop');
+    await expect(page.getByText('Демо-режим: оплаты и выдачи нет')).toBeVisible();
+    // Фильтр по серверу оставляет только его товары.
+    await page.getByRole('button', {name: 'Магия', exact: true}).click();
+    await expect(page.getByRole('heading', {name: 'Книга ученика'})).toBeVisible();
+    await expect(page.getByRole('heading', {name: 'Набор механика'})).toHaveCount(0);
+    await page.getByRole('button', {name: 'Все', exact: true}).click();
+
+    await page.getByRole('button', {name: 'Купить «Набор механика»'}).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog.getByText('Баланс после покупки')).toBeVisible();
+    await dialog.getByRole('button', {name: /Купить за 120/}).click();
+    await expect(dialog.locator('.mc-buy__done')).toContainText('оплачено, ждёт выдачи');
+    await expect(dialog.getByText('игровой сервер не подключён')).toBeVisible();
+    await dialog.getByRole('button', {name: 'Мои заказы'}).click();
+    await expect(page).toHaveURL(/\/account\/wallet$/);
+    await expect(page.locator('.mc-wallet__value')).toHaveText(/1\s080/);
+    await expect(page.getByRole('cell', {name: 'Оплачено, ждёт выдачи'})).toBeVisible();
+    await expect(page.getByRole('cell', {name: 'Покупка: Набор механика'})).toBeVisible();
+  });
+
+  test('баланс: нехватка средств не даёт купить; демо-пополнение помечено и работает', async ({page}) => {
+    await demoPlayer(page);
+    await page.goto('/account/ranks');
+    await page.getByRole('button', {name: 'Оформить ранг «Легенда»'}).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog.getByText(/не хватает 300/)).toBeVisible();
+    await expect(dialog.getByRole('button', {name: /Купить за/})).toHaveCount(0);
+    await dialog.getByRole('button', {name: 'Пополнить баланс'}).click();
+    await expect(page).toHaveURL(/\/account\/wallet$/);
+    await page.getByRole('button', {name: '+500'}).click();
+    await page.getByRole('button', {name: 'Пополнить (демо)'}).click();
+    await expect(page.locator('.mc-wallet__value')).toHaveText(/1\s700/);
+
+    // Теперь ранг оформляется; персонаж в кабинете получает его.
+    await page.goto('/account/ranks');
+    await page.getByRole('button', {name: 'Оформить ранг «Легенда»'}).click();
+    await page.getByRole('dialog').getByRole('button', {name: /Купить за 1\s500/}).click();
+    await expect(page.getByRole('dialog').locator('.mc-buy__done')).toContainText(/Списано 1\s500/);
+    await page.getByRole('dialog').getByRole('button', {name: 'Готово'}).click();
+    await expect(page.getByText('Ваш ранг')).toBeVisible();
+    // Ранг ниже действующего оформить нельзя.
+    await expect(page.getByRole('button', {name: '«Искатель» ниже вашего ранга'})).toHaveAttribute('aria-disabled', 'true');
+    await page.goto('/account');
+    await expect(page.getByText('Ранг «Легенда»').first()).toBeVisible();
+  });
+
+  test('телефон: разделы — панель снизу, нет горизонтальной прокрутки', async ({browser}) => {
+    const context = await browser.newContext({viewport: {width: 360, height: 740}, hasTouch: true, isMobile: true});
+    const page = await context.newPage();
+    await demoPlayer(page);
+    for (const path of ['/account', '/account/shop', '/account/ranks', '/account/wallet', '/account/settings']) {
+      await page.goto(path);
+      await expect(page.getByRole('heading', {level: 1})).toBeVisible();
+      await noOverflow(page);
+    }
+    const nav = page.getByRole('navigation', {name: 'Разделы кабинета'});
+    const box = await nav.boundingBox();
+    // Панель закреплена у нижнего края экрана.
+    expect(box!.y + box!.height).toBeGreaterThan(740 - 40);
+    expect(box!.y + box!.height).toBeLessThanOrEqual(740);
+    await nav.getByRole('link', {name: 'Магазин'}).click();
+    await expect(page).toHaveURL(/\/account\/shop$/);
+    await context.close();
   });
 });

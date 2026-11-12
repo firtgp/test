@@ -22,6 +22,10 @@ export const seedSettings: SiteSettings = {
   telegram_url: '',
   vk_url: '',
   contact_email: '',
+  currency_name: 'Искры',
+  currency_one: 'искра',
+  currency_few: 'искры',
+  currency_many: 'искр',
 };
 
 const MP_TECH = '10000000-0000-4000-8000-000000000001';

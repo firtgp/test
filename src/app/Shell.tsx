@@ -9,7 +9,7 @@ import {Text} from '@astryxdesign/core/Text';
 import {TopNav, TopNavHeading, TopNavItem} from '@astryxdesign/core/TopNav';
 import {VStack} from '@astryxdesign/core/VStack';
 import {CubeIcon, UserIcon, WifiSlashIcon} from '@phosphor-icons/react';
-import {isDemo} from '../data';
+import {backend, isDemo} from '../data';
 import {isStaffAdmin, useAccount, useOnline, useSettings} from './hooks';
 
 const NAV = [
@@ -112,6 +112,7 @@ export function Shell({children}: {children: ReactNode}) {
               {NAV.map(n => (
                 <TopNavItem key={n.href} label={n.label} href={n.href} isSelected={pathname.startsWith(n.href)} />
               ))}
+              {backend.shop ? <TopNavItem label="Магазин" href="/account/shop" isSelected={pathname.startsWith('/account/shop')} /> : null}
               {isStaffAdmin(account) ? (
                 <TopNavItem label="Админка" href="/admin" isSelected={pathname.startsWith('/admin')} />
               ) : null}

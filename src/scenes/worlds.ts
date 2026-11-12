@@ -1,109 +1,8 @@
-// Три «мира» для первого экрана: парящие острова из блоков, собранные кодом.
+// Три «мира» серверов и их общая панорама: парящие острова из блоков, собранные кодом.
 // Это авторская иллюстрация тем сборок, а не скриншоты настоящих миров проекта.
-// Чтобы показать реальный мир, загрузите рендер в галерею и замените сцену картинкой.
+import {Builder, rng, type Glow, type Voxel, type World} from './build';
 
-export type ScenePreset = 'techno' | 'magic' | 'survival';
-export const SCENE_PRESETS: ScenePreset[] = ['techno', 'magic', 'survival'];
-export const SCENE_LABEL: Record<ScenePreset, string> = {
-  techno: 'Завод (техника)',
-  magic: 'Кристаллы (магия)',
-  survival: 'Холмы (выживание)',
-};
-
-export interface Voxel {
-  x: number;
-  y: number;
-  z: number;
-  color: string;
-  glow?: boolean;
-}
-export interface Glow {
-  x: number;
-  y: number;
-  z: number;
-  color: string;
-  size: number;
-}
-export interface World {
-  voxels: Voxel[];
-  glows: Glow[];
-  lights: {x: number; y: number; z: number; color: string; intensity: number; distance: number}[];
-  /** Небо рисуется CSS-градиентом под прозрачным холстом. */
-  sky: [string, string, string];
-  fog: string;
-  sun: string;
-  hemi: [string, string];
-  /** Центр и размеры для постановки камеры. */
-  focusY: number;
-  halfHeight: number;
-  halfWidth: number;
-}
-
-function rng(seed: number) {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-class Builder {
-  private map = new Map<string, Voxel>();
-  glows: Glow[] = [];
-  constructor(public rand: () => number) {}
-  set(x: number, y: number, z: number, color: string, glow = false) {
-    this.map.set(`${x},${y},${z}`, {x, y, z, color, glow});
-  }
-  has(x: number, y: number, z: number) {
-    return this.map.has(`${x},${y},${z}`);
-  }
-  pick(colors: string[]) {
-    return colors[Math.floor(this.rand() * colors.length)];
-  }
-  /** Полый параллелепипед: внутренние блоки не создаются. */
-  box(x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, colors: string[], glow = false) {
-    for (let x = x0; x <= x1; x++)
-      for (let y = y0; y <= y1; y++)
-        for (let z = z0; z <= z1; z++) {
-          const shell = x === x0 || x === x1 || y === y0 || y === y1 || z === z0 || z === z1;
-          if (shell) this.set(x, y, z, this.pick(colors), glow);
-        }
-  }
-  /** Парящий остров: высота поверхности задаётся функцией, низ сужается конусом. */
-  island(radius: number, depth: number, top: (x: number, z: number) => number, layers: (dy: number) => string[]) {
-    for (let x = -radius; x <= radius; x++)
-      for (let z = -radius; z <= radius; z++) {
-        const d = Math.hypot(x, z);
-        const edge = radius - (this.rand() < 0.5 ? 0.4 : 0);
-        if (d > edge) continue;
-        const surface = top(x, z);
-        const bottom = -Math.round(depth * Math.pow(1 - d / radius, 0.75) + this.rand() * 1.2);
-        for (let y = bottom; y <= surface; y++) {
-          // Блок нужен, только если он виден снаружи.
-          const inner = y > bottom && y < surface && d < radius - 1.6;
-          if (!inner) this.set(x, y, z, this.pick(layers(surface - y)));
-        }
-      }
-  }
-  blob(cx: number, cy: number, cz: number, r: number, colors: string[], hole = 0.12) {
-    for (let x = -r; x <= r; x++)
-      for (let y = -r; y <= r; y++)
-        for (let z = -r; z <= r; z++) {
-          const d = Math.hypot(x, y * 1.15, z);
-          if (d <= r && d > r - 1.5 && this.rand() > hole) this.set(cx + x, cy + y, cz + z, this.pick(colors));
-        }
-  }
-  glowAt(x: number, y: number, z: number, color: string, size: number) {
-    this.glows.push({x, y, z, color, size});
-  }
-  voxels() {
-    return [...this.map.values()];
-  }
-}
-
-function techno(): World {
+export function techno(): World {
   const b = new Builder(rng(11));
   const steel = ['#566779', '#5d6f82', '#4f6072'];
   const dark = ['#2e3a47', '#33404e'];
@@ -186,12 +85,12 @@ function techno(): World {
       {x: -2, y: 6, z: 8, color: cyan, intensity: 260, distance: 26},
       {x: 6, y: 5, z: 9, color: amber, intensity: 120, distance: 18},
     ],
-    sky: ['#06121f', '#0f3a52', '#3fb6c8'], fog: '#123a4f', sun: '#d8f4ff', hemi: ['#a8e4f6', '#1c2530'],
+    sky: ['#06121f', '#0f3a52', '#3fb6c8'], fog: '#123a4f', sun: '#d8f4ff', hemi: ['#a8e4f6', '#1c2530'], rim: '#5fe0ff',
     focusY: 10, halfHeight: 22, halfWidth: 12,
   };
 }
 
-function magic(): World {
+export function magic(): World {
   const b = new Builder(rng(23));
   const moss = ['#6a4fb0', '#7a5cc6', '#5d459e'];
   const stone = ['#3b3354', '#342d4b', '#413a5d'];
@@ -262,12 +161,12 @@ function magic(): World {
       {x: 0, y: 10, z: 5, color: '#a070ff', intensity: 320, distance: 30},
       {x: 3, y: 6, z: 10, color: pink, intensity: 160, distance: 18},
     ],
-    sky: ['#12062b', '#6a1b74', '#ff7a5c'], fog: '#5a1a66', sun: '#ffd0f0', hemi: ['#d59bff', '#1a1026'],
+    sky: ['#12062b', '#6a1b74', '#ff7a5c'], fog: '#5a1a66', sun: '#ffd0f0', hemi: ['#d59bff', '#1a1026'], rim: '#ff8ae6',
     focusY: 8, halfHeight: 20, halfWidth: 12,
   };
 }
 
-function survival(): World {
+export function survival(): World {
   const b = new Builder(rng(37));
   const grass = ['#5fa052', '#6cb05c', '#559648'];
   const dirt = ['#7a5a3c', '#6f5136'];
@@ -337,55 +236,13 @@ function survival(): World {
       {x: -3, y: 4, z: 9, color: '#ff9a3c', intensity: 180, distance: 18},
       {x: 4, y: 6, z: 10, color: amber, intensity: 110, distance: 14},
     ],
-    sky: ['#0a2036', '#2b6c7d', '#f3b45a'], fog: '#2f6876', sun: '#ffe2a8', hemi: ['#ffe0b0', '#18241c'],
+    sky: ['#0a2036', '#2b6c7d', '#f3b45a'], fog: '#2f6876', sun: '#ffe2a8', hemi: ['#ffe0b0', '#18241c'], rim: '#ffc46b',
     focusY: 8, halfHeight: 18, halfWidth: 12,
   };
 }
 
-/** Узел аккаунта: маяк на площадке и три портала в цветах серверов. */
-function hub(portals: string[]): World {
-  const b = new Builder(rng(51));
-  const slab = ['#3a3f4b', '#424856', '#353a45'];
-  const deep = ['#23262e', '#2a2e37'];
-  const amber = '#ffc061';
-  b.island(9, 8, () => 0, dy => (dy === 0 ? slab : deep));
-  for (let a = 0; a < 40; a++) {
-    const t = (a / 40) * Math.PI * 2;
-    b.set(Math.round(Math.cos(t) * 5), 0, Math.round(Math.sin(t) * 5), a % 2 ? '#d6a531' : '#8a6d2c');
-  }
-  // Маяк.
-  b.box(-1, 1, -1, 1, 2, 1, ['#2a2e37']);
-  for (let y = 3; y <= 15; y++) b.set(0, y, 0, y % 4 === 3 ? '#fff0c8' : amber, true);
-  b.box(-1, 16, -1, 1, 16, 1, ['#fff0c8'], true);
-  b.glowAt(0, 9, 1, amber, 20);
-  b.glowAt(0, 16, 0, '#fff0c8', 9);
-  // Порталы.
-  portals.slice(0, 3).forEach((color, i) => {
-    const t = (-Math.PI / 2) + (i - 1) * 1.15;
-    const cx = Math.round(Math.cos(t) * -7.2);
-    const cz = Math.round(Math.sin(t) * -7.2) ;
-    const alongX = Math.abs(Math.cos(t)) < 0.5;
-    for (let a = 0; a < 24; a++) {
-      const u = (a / 24) * Math.PI * 2;
-      const du = Math.round(Math.cos(u) * 3);
-      const dy = Math.round(Math.sin(u) * 3);
-      b.set(cx + (alongX ? du : 0), 4 + dy, cz + (alongX ? 0 : du), b.pick(['#1c1f26', '#262a33']));
-    }
-    for (let du = -2; du <= 2; du++)
-      for (let dy = -2; dy <= 2; dy++)
-        if (Math.hypot(du, dy) <= 2.3) b.set(cx + (alongX ? du : 0), 4 + dy, cz + (alongX ? 0 : du), color, true);
-    b.glowAt(cx, 4, cz, color, 13);
-  });
-  return {
-    voxels: b.voxels(), glows: b.glows,
-    lights: [{x: 0, y: 8, z: 4, color: amber, intensity: 240, distance: 26}],
-    sky: ['#1a1406', '#4a3410', '#f2b544'], fog: '#3a2a10', sun: '#fff1cf', hemi: ['#ffe6b0', '#20180a'],
-    focusY: 6, halfHeight: 14, halfWidth: 11,
-  };
-}
-
 /** Панорама: три острова в одном кадре — для финального блока. */
-function panorama(): World {
+export function panorama(): World {
   const parts: [World, number, number, number][] = [
     [techno(), -27, -3, 4],
     [magic(), 0, 4, -8],
@@ -401,33 +258,8 @@ function panorama(): World {
   }
   return {
     voxels, glows, lights,
-    sky: ['#0b1020', '#3a1f5c', '#f08a4b'], fog: '#3a2450', sun: '#ffe2c0', hemi: ['#e8c8ff', '#161020'],
+    sky: ['#0b1020', '#3a1f5c', '#f08a4b'], fog: '#3a2450', sun: '#ffe2c0', hemi: ['#e8c8ff', '#161020'], rim: '#ffb070',
     focusY: 9, halfHeight: 22, halfWidth: 42,
   };
 }
 
-export type WorldId = ScenePreset | 'panorama' | `hub:${string}`;
-
-const cache = new Map<string, World>();
-export function buildWorld(id: WorldId): World {
-  let w = cache.get(id);
-  if (!w) {
-    if (id === 'techno') w = techno();
-    else if (id === 'magic') w = magic();
-    else if (id === 'survival') w = survival();
-    else if (id === 'panorama') w = panorama();
-    else w = hub(id.slice(4).split(','));
-    cache.set(id, w);
-  }
-  return w;
-}
-
-/** Небо финального блока (панорама трёх миров). */
-export const PANORAMA_SKY: [string, string, string] = ['#0b1020', '#3a1f5c', '#f08a4b'];
-
-/** Небо доступно без WebGL: по нему строится запасной фон панели. */
-export const SKY: Record<ScenePreset, [string, string, string]> = {
-  techno: ['#06121f', '#0f3a52', '#3fb6c8'],
-  magic: ['#12062b', '#6a1b74', '#ff7a5c'],
-  survival: ['#0a2036', '#2b6c7d', '#f3b45a'],
-};
