@@ -28,6 +28,7 @@ import {
   type SiteSettings, type StaffEntry, type StaffRole,
 } from '../../data/types';
 import {Async, Page} from '../../components/Page';
+import {SCENE_LABEL} from '../../scenes/worlds';
 import {CrudTab} from './Crud';
 
 const opts = (labels: Record<string, string>) => Object.entries(labels).map(([value, label]) => ({value, label}));
@@ -49,7 +50,7 @@ function ServersTab() {
           makeNew={() => ({
             id: crypto.randomUUID(), slug: '', name: '', modpack_id: null, host: '', port: 25565, mode: '',
             tagline: '', description_md: '', wipe_policy: '', launched_at: null, next_wipe_at: null,
-            accent: '#F2B544', status_mode: 'auto', maintenance_note: '', sort: rows.length + 1, published: false,
+            accent: '#F2B544', scene: 'survival', status_mode: 'auto', maintenance_note: '', sort: rows.length + 1, published: false,
           })}
           save={async r => {
             await backend.saveContent('servers', r);
@@ -78,6 +79,7 @@ function ServersTab() {
             {name: 'launched_at', label: 'Дата запуска', type: 'date', nullable: true},
             {name: 'next_wipe_at', label: 'Ближайший вайп', type: 'datetime', nullable: true},
             {name: 'accent', label: 'Акцент сборки', type: 'text', description: 'Цвет #RRGGBB. Применяется только на карточке и странице сервера.'},
+            {name: 'scene', label: 'Сцена на главной', type: 'select', options: opts(SCENE_LABEL), description: 'Мир из блоков на панели сервера.'},
             {name: 'status_mode', label: 'Режим статуса', type: 'select', options: [{value: 'auto', label: 'По мониторингу'}, {value: 'maintenance', label: 'Техработы'}]},
             {name: 'maintenance_note', label: 'Пояснение к техработам', type: 'text'},
             {name: 'sort', label: 'Порядок', type: 'number'},

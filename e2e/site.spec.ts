@@ -39,19 +39,19 @@ test.describe('витрина', () => {
     // Три разных состояния мониторинга: текст, а не только цвет.
     await expect(page.getByText('Онлайн').first()).toBeVisible();
     await expect(page.getByText('Офлайн').first()).toBeVisible();
-    await expect(page.getByText(/Нет данных с \d\d:\d\d МСК/)).toBeVisible();
+    await expect(page.getByText(/Нет данных с \d\d:\d\d МСК/).first()).toBeVisible();
     // Суммарный онлайн считает только живой сервер: устаревшие 12 игроков не прибавляются.
     await expect(page.getByText('Сейчас играют: 37')).toBeVisible();
     await expect(page.getByText('NOT AN OFFICIAL MINECRAFT SERVICE. NOT APPROVED BY OR ASSOCIATED WITH MOJANG OR MICROSOFT.')).toBeVisible();
     await noOverflow(page);
-    await page.getByRole('link', {name: 'Начать играть'}).click();
+    await page.getByRole('link', {name: 'Начать играть'}).first().click();
     await expect(page).toHaveURL(/\/start$/);
     await expect(page.getByRole('heading', {level: 1})).toHaveText('Как начать играть');
   });
 
   test('кнопка на карточке предвыбирает сервер в инструкции', async ({page}) => {
     await page.goto('/');
-    await page.getByRole('link', {name: 'Играть на «Магия»'}).click();
+    await page.getByRole('link', {name: 'Играть на «Магия»'}).first().click();
     await expect(page).toHaveURL(/\/start\?server=magic$/);
     await expect(page.getByText('Вы выбрали сервер «Магия»')).toBeVisible();
     await expect(page.getByRole('combobox', {name: 'Сервер'})).toContainText('Магия');
@@ -360,13 +360,13 @@ test.describe('адаптация и доступность', () => {
     await expect(page.getByRole('button', {name: 'Отправить ссылку себе'})).toBeVisible();
     await page.goto('/');
     // Главное действие видно на первом экране без прокрутки.
-    await expect(page.getByRole('link', {name: 'Начать играть'})).toBeInViewport();
+    await expect(page.getByRole('link', {name: 'Начать играть'}).first()).toBeInViewport();
     await context.close();
   });
 
   test('клавиатура: фокус виден на главной кнопке, форма отправляется по Enter', async ({page}) => {
     await page.goto('/');
-    const cta = page.getByRole('link', {name: 'Начать играть'});
+    const cta = page.getByRole('link', {name: 'Начать играть'}).first();
     for (let i = 0; i < 30 && !(await cta.evaluate(el => el === document.activeElement)); i++) {
       await page.keyboard.press('Tab');
     }
@@ -383,25 +383,37 @@ test.describe('адаптация и доступность', () => {
     await expect(page).toHaveURL(/\/account$/);
   });
 
-  test('reduced motion: параллакс и анимация кнопки отключены', async ({browser}) => {
-    const context = await browser.newContext({reducedMotion: 'reduce'});
+  test('reduced motion: сцена неподвижна, проход света на кнопке отключён', async ({browser}) => {
+    const context = await browser.newContext({reducedMotion: 'reduce', viewport: {width: 1280, height: 800}});
     const page = await context.newPage();
     await page.goto('/');
-    await page.mouse.move(100, 100);
-    await page.mouse.move(900, 500);
-    await page.waitForTimeout(150);
-    const scene = page.locator('.mc-hero__scene');
-    expect(await scene.evaluate(el => (el as HTMLElement).style.getPropertyValue('--mc-px'))).toBe('');
-    expect(await page.locator('.mc-hero__layer').first().evaluate(el => getComputedStyle(el).transform)).toBe('none');
-    await page.getByRole('link', {name: 'Начать играть'}).hover();
-    expect(await page.getByRole('link', {name: 'Начать играть'}).evaluate(el => getComputedStyle(el, '::after').animationName)).toBe('none');
+    const scene = page.locator('.mc-scene--ready').first();
+    await expect(scene).toBeVisible();
+    const before = await scene.screenshot();
+    await page.waitForTimeout(1500);
+    expect((await scene.screenshot()).equals(before)).toBe(true);
+    const cta = page.getByRole('link', {name: 'Начать играть'}).first();
+    await cta.hover();
+    expect(await cta.evaluate(el => getComputedStyle(el, '::after').animationName)).toBe('none');
     await context.close();
   });
 
-  test('обычный режим: параллакс реагирует на указатель', async ({page}) => {
+  test('обычный режим: сцены трёх миров рисуются и движутся', async ({page}) => {
+    await page.setViewportSize({width: 1280, height: 800});
     await page.goto('/');
-    await page.mouse.move(200, 200);
-    await page.mouse.move(1000, 400);
-    await expect.poll(() => page.locator('.mc-hero__scene').evaluate(el => (el as HTMLElement).style.getPropertyValue('--mc-px'))).not.toBe('');
+    await expect(page.locator('.mc-scene--ready')).toHaveCount(3);
+    const scene = page.locator('.mc-scene--ready').first();
+    const before = await scene.screenshot();
+    await page.waitForTimeout(1500);
+    expect((await scene.screenshot()).equals(before)).toBe(false);
+  });
+
+  test('панель сервера кликабельна целиком и ведёт к его инструкции', async ({page}) => {
+    await page.setViewportSize({width: 1280, height: 800});
+    await page.goto('/');
+    const panel = page.locator('.mc-world').nth(1);
+    const box = (await panel.boundingBox())!;
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height * 0.25);
+    await expect(page).toHaveURL(/\/start\?server=magic$/);
   });
 });

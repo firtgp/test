@@ -4,7 +4,14 @@
  * Здесь нет hex-значений: чтобы сменить палитру, правьте тему.
  */
 :root {
-  color-scheme: dark;
+  --mc-gutter: clamp(1.5rem, 5vw, 6rem);
+  /* only: браузер не должен принудительно перекрашивать и без того тёмный сайт. */
+  color-scheme: only dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: only dark;
+  }
 }
 html {
   background: var(--color-background-body);
@@ -55,95 +62,6 @@ body {
 .mc-prose {
   font-size: 1.0625rem;
   line-height: 1.65;
-}
-
-/* ---------- первый экран ---------- */
-.mc-hero {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  min-height: min(44rem, 92dvh);
-  display: grid;
-  align-items: end;
-  background: var(--color-background-body);
-}
-.mc-hero__scene {
-  position: absolute;
-  inset: 0;
-  z-index: -2;
-  width: 100%;
-  height: 100%;
-}
-.mc-hero__layer {
-  transform: translate3d(calc(var(--mc-px, 0) * var(--mc-depth, 0) * 1px), calc(var(--mc-py, 0) * var(--mc-depth, 0) * 0.5px), 0);
-  transition: transform var(--duration-slow) var(--ease-standard);
-  will-change: transform;
-}
-/* Затемнение снизу и слева: текст читается на любом кадре. Сам текст не размывается. */
-.mc-hero::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background:
-    linear-gradient(90deg, color-mix(in srgb, var(--color-background-body) 82%, transparent) 0%, transparent 62%),
-    linear-gradient(0deg, var(--color-background-body) 0%, transparent 38%);
-  pointer-events: none;
-}
-.mc-hero__inner {
-  width: 100%;
-  max-width: 72rem;
-  margin-inline: auto;
-  padding: var(--spacing-10) var(--spacing-6);
-  padding-block-start: 8rem;
-  box-sizing: border-box;
-}
-.mc-hero__copy {
-  max-width: 40rem;
-}
-.mc-hero__title {
-  font-family: var(--font-family-heading);
-  font-weight: 700;
-  font-size: clamp(2.125rem, 1.1rem + 4.6vw, 4.5rem);
-  line-height: 1.06;
-  letter-spacing: -0.02em;
-  text-wrap: balance;
-  margin: 0;
-  color: var(--color-text-primary);
-}
-.mc-hero__lead {
-  font-size: clamp(1rem, 0.95rem + 0.35vw, 1.25rem);
-  line-height: 1.55;
-  color: var(--color-text-secondary);
-  max-width: 34rem;
-  margin: 0;
-  text-wrap: pretty;
-}
-.mc-hero__note {
-  position: absolute;
-  inset-inline-end: var(--spacing-4);
-  inset-block-start: var(--spacing-4);
-  max-width: 18rem;
-  padding: var(--spacing-2) var(--spacing-3);
-  border-radius: var(--radius-element);
-  background: color-mix(in srgb, var(--color-background-body) 80%, transparent);
-  border: 1px dashed var(--color-border-emphasized);
-  font-size: 0.8125rem;
-  line-height: 1.4;
-  color: var(--color-text-secondary);
-}
-.mc-proof {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--spacing-1) var(--spacing-2);
-  padding: var(--spacing-1-5) var(--spacing-3);
-  border-radius: var(--radius-container);
-  background: color-mix(in srgb, var(--color-background-surface) 85%, transparent);
-  border: 1px solid var(--color-border);
-  font-size: 0.9375rem;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
 }
 
 /* ---------- главная кнопка «Начать играть» ---------- */
@@ -298,37 +216,6 @@ body {
   color: var(--color-text-secondary);
 }
 
-/* ---------- шаги ---------- */
-.mc-steps {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: var(--spacing-4);
-  grid-template-columns: repeat(auto-fit, minmax(14.5rem, 1fr));
-  counter-reset: step;
-}
-.mc-step {
-  counter-increment: step;
-  padding: var(--spacing-6);
-  border-radius: var(--radius-container);
-  background: var(--color-background-card);
-  border: 1px solid var(--color-border);
-}
-.mc-step::before {
-  content: counter(step);
-  display: grid;
-  place-items: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  margin-block-end: var(--spacing-4);
-  border-radius: var(--radius-element);
-  background: var(--mc-surface-raised);
-  color: var(--color-text-accent);
-  font-family: var(--font-family-heading);
-  font-weight: 700;
-}
-
 /* ---------- прочее ---------- */
 .mc-footer {
   border-block-start: 1px solid var(--color-border);
@@ -373,21 +260,6 @@ body {
     padding-inline: var(--spacing-4);
     padding-block: var(--spacing-8);
   }
-  .mc-hero {
-    min-height: auto;
-  }
-  .mc-hero__inner {
-    padding-inline: var(--spacing-4);
-    padding-block-start: 10rem;
-    padding-block-end: var(--spacing-8);
-  }
-  .mc-hero::after {
-    background: linear-gradient(0deg, var(--color-background-body) 22%, color-mix(in srgb, var(--color-background-body) 60%, transparent) 60%, transparent 100%);
-  }
-  .mc-hero__note {
-    inset-inline: var(--spacing-4);
-    max-width: none;
-  }
   .mc-cta {
     width: 100%;
     min-height: 3.5rem;
@@ -405,10 +277,6 @@ body {
   html {
     scroll-behavior: auto;
   }
-  .mc-hero__layer {
-    transform: none;
-    transition: none;
-  }
   .mc-cta,
   .mc-cta:active {
     transition: none;
@@ -424,4 +292,680 @@ body {
   border-radius: var(--radius-container);
   background: var(--color-background-card);
   border: 1px solid var(--color-border);
+}
+
+/* ================= главная: первый экран с панелями-мирами ================= */
+.mc-hero2 {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
+  align-items: stretch;
+  gap: var(--spacing-8);
+  min-height: min(50rem, calc(100dvh - 5.5rem));
+  padding-inline: var(--mc-gutter) clamp(2rem, 4vw, 5rem);
+  overflow: hidden;
+  background:
+    radial-gradient(60rem 30rem at 0% 100%, color-mix(in srgb, var(--color-accent) 14%, transparent), transparent 70%),
+    var(--color-background-body);
+}
+.mc-hero2__copy {
+  align-self: center;
+  padding-block: var(--spacing-10);
+  min-width: 0;
+}
+.mc-hero2__title {
+  margin: 0;
+  font-family: var(--font-family-heading);
+  font-weight: 700;
+  font-size: clamp(2.25rem, 1rem + 4.2vw, 5rem);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+  color: var(--color-text-primary);
+}
+.mc-hero2__lead {
+  margin: 0;
+  max-width: 32rem;
+  font-size: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem);
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+  text-wrap: pretty;
+}
+.mc-hero2__meta {
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary);
+  padding-inline-start: var(--spacing-3);
+  border-inline-start: 2px solid var(--color-accent);
+}
+.mc-live {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-1-5) var(--spacing-3);
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--mc-status-online) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--mc-status-online) 45%, transparent);
+  color: var(--color-text-primary);
+  font-weight: 700;
+  font-size: 0.9375rem;
+  font-variant-numeric: tabular-nums;
+}
+.mc-live__dot {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: var(--radius-full);
+  background: var(--mc-status-online);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--mc-status-online) 25%, transparent);
+}
+.mc-live__note {
+  font-weight: 400;
+  color: var(--color-text-secondary);
+}
+
+.mc-worlds {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: var(--spacing-3);
+  min-width: 0;
+  /* Наклон панелей; правый край уходит за экран. */
+  transform: skewX(-7deg);
+  transform-origin: 50% 100%;
+}
+.mc-world {
+  --server-accent: var(--color-accent);
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  container-type: inline-size;
+  background: var(--color-background-surface);
+  border-block-end: 4px solid var(--server-accent);
+  transition: flex-grow var(--duration-slow) var(--ease-standard);
+}
+.mc-world:hover,
+.mc-world:focus-within {
+  flex-grow: 1.75;
+}
+.mc-scene {
+  position: absolute;
+  inset: 0;
+}
+.mc-scene canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  opacity: 0;
+  transition: opacity var(--duration-slow) var(--ease-standard);
+}
+.mc-scene--ready canvas {
+  opacity: 1;
+}
+.mc-world__scene {
+  /* Сцена шире панели и выпрямлена обратно, чтобы мир стоял вертикально. */
+  inset: 0 -30%;
+  transform: skewX(7deg);
+}
+.mc-world__shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, color-mix(in srgb, var(--color-background-body) 96%, transparent) 0%, color-mix(in srgb, var(--color-background-body) 70%, transparent) 26%, transparent 58%);
+  pointer-events: none;
+}
+.mc-world__body {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  padding: var(--spacing-6);
+  padding-inline-start: var(--spacing-8);
+  transform: skewX(7deg);
+}
+.mc-world__index {
+  font-family: var(--font-family-heading);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--server-accent);
+}
+.mc-world__name {
+  margin: 0;
+  font-family: var(--font-family-heading);
+  font-weight: 700;
+  font-size: clamp(0.9375rem, 8.4cqi, 2rem);
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  overflow-wrap: break-word;
+  color: var(--color-text-primary);
+}
+.mc-world__pack {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--server-accent);
+  overflow-wrap: anywhere;
+}
+.mc-world .mc-status {
+  font-size: 0.875rem;
+}
+.mc-world__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-3);
+  margin-block-start: var(--spacing-2);
+}
+.mc-world__play {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  min-height: 2.75rem;
+  padding-inline: var(--spacing-4);
+  border-radius: var(--radius-element);
+  background: var(--server-accent);
+  color: var(--mc-cta-text);
+  font-family: var(--font-family-heading);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform var(--duration-fast) var(--ease-standard), filter var(--duration-fast) var(--ease-standard);
+}
+/* Вся панель кликабельна: ссылка «Играть» растянута на неё. */
+.mc-world__play::before {
+  content: '';
+  position: absolute;
+  inset: -100vh -50vw 0;
+}
+.mc-world__play:hover {
+  filter: brightness(1.12);
+}
+.mc-world__play:active {
+  transform: translateY(2px);
+}
+.mc-world__more {
+  position: relative;
+  z-index: 1;
+  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-text-primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
+/* ---------- цифры ---------- */
+.mc-stats {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  border-block: 1px solid var(--color-border);
+  background: var(--color-background-surface);
+  padding-inline: var(--mc-gutter);
+}
+.mc-stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  padding: var(--spacing-6) var(--spacing-4);
+  border-inline-start: 1px solid var(--color-border);
+}
+.mc-stat:first-child {
+  border-inline-start: 0;
+  padding-inline-start: 0;
+}
+.mc-stat__value {
+  margin: 0;
+  font-family: var(--font-family-heading);
+  font-weight: 700;
+  font-size: clamp(2rem, 1.4rem + 2vw, 3.25rem);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+}
+.mc-stat__label {
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary);
+}
+
+/* ---------- заголовки секций ---------- */
+.mc-page--home {
+  max-width: none;
+  gap: 6rem;
+  padding-block: 6rem;
+  padding-inline: var(--mc-gutter);
+}
+.mc-footer .mc-page {
+  max-width: none;
+  padding-inline: var(--mc-gutter);
+}
+.mc-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+.mc-eyebrow__num {
+  font-family: var(--font-family-heading);
+  color: var(--color-text-accent);
+}
+.mc-title {
+  margin: 0;
+  font-family: var(--font-family-heading);
+  font-weight: 700;
+  font-size: clamp(1.75rem, 1.2rem + 2.2vw, 3.25rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  color: var(--color-text-primary);
+}
+.mc-lead {
+  margin: 0;
+  max-width: 38rem;
+  font-size: 1.125rem;
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+}
+.mc-arrow-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  min-height: 2.75rem;
+  font-weight: 700;
+  color: var(--color-text-accent);
+  text-decoration: none;
+}
+.mc-arrow-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
+/* ---------- путь из четырёх шагов ---------- */
+.mc-path {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--spacing-6);
+  position: relative;
+}
+.mc-path::before {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 1.75rem;
+  height: 2px;
+  background: linear-gradient(90deg, var(--color-accent), color-mix(in srgb, var(--color-accent) 10%, transparent));
+}
+.mc-path__step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+.mc-path__num {
+  display: grid;
+  place-items: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: var(--radius-element);
+  background: var(--color-background-body);
+  border: 2px solid var(--color-accent);
+  color: var(--color-text-accent);
+  font-family: var(--font-family-heading);
+  font-size: 1.375rem;
+  font-weight: 700;
+  margin-block-end: var(--spacing-3);
+}
+.mc-path__title {
+  margin: 0;
+  font-family: var(--font-family-heading);
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.mc-path__text {
+  margin: 0;
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+}
+
+/* ---------- строки серверов ---------- */
+.mc-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-block-start: 1px solid var(--color-border);
+}
+.mc-row {
+  --server-accent: var(--color-accent);
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(12rem, 1.3fr) minmax(11rem, 1fr) minmax(10rem, 1.2fr) minmax(10rem, 1fr) auto;
+  align-items: center;
+  gap: var(--spacing-6);
+  padding: var(--spacing-6) var(--spacing-4);
+  padding-inline-start: var(--spacing-6);
+  border-block-end: 1px solid var(--color-border);
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+.mc-row::before {
+  content: '';
+  position: absolute;
+  inset-block: var(--spacing-4);
+  inset-inline-start: 0;
+  width: 4px;
+  border-radius: var(--radius-full);
+  background: var(--server-accent);
+}
+.mc-row:hover {
+  background: var(--color-background-surface);
+}
+.mc-row__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  min-width: 0;
+}
+.mc-row__name {
+  font-family: var(--font-family-heading);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--color-text-primary);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.mc-row__name:hover {
+  color: var(--server-accent);
+}
+.mc-row__pack {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--server-accent);
+  overflow-wrap: anywhere;
+}
+.mc-row__cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  min-width: 0;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.mc-row__label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+.mc-row__go {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  min-height: 2.75rem;
+  padding-inline: var(--spacing-4);
+  border-radius: var(--radius-element);
+  border: 1px solid var(--color-border-emphasized);
+  color: var(--color-text-primary);
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
+}
+.mc-row__go:hover {
+  background: var(--server-accent);
+  border-color: var(--server-accent);
+  color: var(--mc-cta-text);
+}
+
+/* ---------- новости ---------- */
+.mc-news {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: var(--spacing-4);
+}
+.mc-news__item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  padding: var(--spacing-6);
+  border-radius: var(--radius-container);
+  background: var(--color-background-surface);
+  border: 1px solid var(--color-border);
+  transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
+}
+.mc-news__item:hover {
+  border-color: var(--color-accent);
+  transform: translateY(-2px);
+}
+.mc-news__item--lead {
+  grid-row: span 2;
+  justify-content: flex-end;
+  min-height: 20rem;
+  padding: var(--spacing-8);
+  background:
+    radial-gradient(40rem 20rem at 100% 0%, color-mix(in srgb, var(--color-accent) 22%, transparent), transparent 70%),
+    var(--color-background-surface);
+}
+.mc-news__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+.mc-chip {
+  padding: var(--spacing-0-5) var(--spacing-2);
+  border-radius: var(--radius-inner);
+  background: var(--color-accent);
+  color: var(--mc-cta-text);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.mc-news__title {
+  margin: 0;
+  font-family: var(--font-family-heading);
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.25;
+  padding-inline-end: var(--spacing-8);
+}
+.mc-news__item--lead .mc-news__title {
+  font-size: clamp(1.5rem, 1.1rem + 1.4vw, 2.25rem);
+  line-height: 1.15;
+}
+.mc-news__title a {
+  color: var(--color-text-primary);
+  text-decoration: none;
+}
+.mc-news__title a::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+.mc-news__when {
+  font-weight: 700;
+  color: var(--color-text-accent);
+}
+.mc-news__text {
+  margin: 0;
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+}
+.mc-news__arrow {
+  position: absolute;
+  inset-block-start: var(--spacing-6);
+  inset-inline-end: var(--spacing-6);
+  color: var(--color-text-secondary);
+}
+.mc-news__item:hover .mc-news__arrow {
+  color: var(--color-text-accent);
+}
+
+/* ---------- финальный призыв ---------- */
+.mc-final {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-8);
+  padding: clamp(2rem, 1rem + 4vw, 4.5rem);
+  border-radius: var(--radius-page);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 40%, transparent);
+  background:
+    radial-gradient(50rem 24rem at 100% 100%, color-mix(in srgb, var(--color-accent) 26%, transparent), transparent 70%),
+    var(--color-background-surface);
+}
+.mc-final__title {
+  margin: 0;
+  max-width: 36rem;
+  font-family: var(--font-family-heading);
+  font-weight: 700;
+  font-size: clamp(1.75rem, 1.2rem + 2.4vw, 3.25rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+@media (max-width: 64rem) {
+  .mc-hero2 {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    min-height: 0;
+    padding-inline: 0;
+  }
+  .mc-world__name {
+    font-size: 1.5rem;
+  }
+  .mc-hero2__copy {
+    padding: var(--spacing-8) var(--spacing-4) var(--spacing-6);
+  }
+  /* На узком экране панели — горизонтальная лента с защёлкиванием, без наклона. */
+  .mc-worlds {
+    transform: none;
+    margin-inline-end: 0;
+    padding-inline: var(--spacing-4);
+    padding-block-end: var(--spacing-6);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: var(--spacing-4);
+    scrollbar-width: none;
+  }
+  .mc-world {
+    flex: 0 0 min(78vw, 22rem);
+    height: 27rem;
+    scroll-snap-align: start;
+    border-radius: var(--radius-container);
+  }
+  .mc-world:hover,
+  .mc-world:focus-within {
+    flex-grow: 0;
+  }
+  .mc-world__scene {
+    inset: 0;
+    transform: none;
+  }
+  .mc-world__body {
+    transform: none;
+    padding: var(--spacing-5);
+  }
+  .mc-path {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: var(--spacing-8);
+  }
+  .mc-path::before {
+    display: none;
+  }
+  .mc-row {
+    grid-template-columns: 1fr 1fr;
+    row-gap: var(--spacing-4);
+  }
+  .mc-row__main,
+  .mc-row__go {
+    grid-column: 1 / -1;
+  }
+  .mc-row__go {
+    justify-content: center;
+  }
+  .mc-news {
+    grid-template-columns: 1fr;
+  }
+  .mc-news__item--lead {
+    min-height: 0;
+  }
+  .mc-page--home {
+    gap: 4rem;
+    padding-block: 4rem;
+    padding-inline: var(--spacing-4);
+  }
+  .mc-footer .mc-page {
+    padding-inline: var(--spacing-4);
+  }
+  .mc-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding-inline: var(--spacing-4);
+  }
+  .mc-stat {
+    padding: var(--spacing-4) var(--spacing-3);
+  }
+  .mc-stat:nth-child(odd) {
+    border-inline-start: 0;
+    padding-inline-start: 0;
+  }
+  .mc-stat:nth-child(n + 3) {
+    border-block-start: 1px solid var(--color-border);
+  }
+}
+@media (max-width: 30rem) {
+  .mc-path {
+    grid-template-columns: 1fr;
+    row-gap: var(--spacing-6);
+  }
+  .mc-path__step {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: var(--spacing-4);
+    row-gap: var(--spacing-1);
+  }
+  .mc-path__num {
+    grid-row: span 2;
+    width: 3rem;
+    height: 3rem;
+    margin: 0;
+  }
+  .mc-row {
+    grid-template-columns: 1fr;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mc-world,
+  .mc-news__item,
+  .mc-scene canvas {
+    transition: none;
+  }
+  .mc-news__item:hover {
+    transform: none;
+  }
 }

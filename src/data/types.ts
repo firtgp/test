@@ -78,6 +78,8 @@ export const serverSchema = z.object({
   launched_at: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
   next_wipe_at: z.string().nullable(),
   accent: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Цвет в формате #RRGGBB'),
+  /** Какой мир из блоков показывать на панели сервера на главной. */
+  scene: z.enum(['techno', 'magic', 'survival']).default('survival'),
   status_mode: z.enum(['auto', 'maintenance']),
   maintenance_note: z.string().trim().max(300),
   sort: z.number().int(),
