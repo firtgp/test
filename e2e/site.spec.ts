@@ -450,7 +450,9 @@ test.describe('адаптация и доступность', () => {
   test('постеры миров рисуются в блоках ниже первого экрана', async ({page}) => {
     await page.setViewportSize({width: 1280, height: 800});
     await page.goto('/');
-    // Постеры рисуются по мере приближения к экрану, поэтому листаем страницу, как человек.
+    // Блоки ниже первого экрана грузятся отдельным файлом — ждём их, затем листаем страницу, как человек:
+    // постеры рисуются по мере приближения к экрану.
+    await expect(page.locator('.mc-final')).toBeAttached();
     const height = await page.evaluate(() => document.documentElement.scrollHeight);
     for (let y = 0; y < height; y += 600) {
       await page.evaluate(v => window.scrollTo(0, v), y);
@@ -461,5 +463,14 @@ test.describe('адаптация и доступность', () => {
     const img = page.locator('.mc-final .mc-poster--ready img');
     await expect(img).toBeVisible();
     expect(await img.evaluate((el: HTMLImageElement) => el.naturalWidth)).toBe(2000);
+  });
+  test('сбой загрузки блоков не роняет сайт: первый экран работает, есть «Повторить»', async ({page}) => {
+    await page.route('**/assets/HomeSections-*.js', route => route.abort());
+    await page.goto('/');
+    await expect(page.getByRole('heading', {level: 1})).toHaveText('Три мира на модах. Один аккаунт.');
+    await expect(page.getByText('Эта часть страницы не загрузилась')).toBeVisible();
+    await expect(page.getByRole('button', {name: 'Повторить'})).toBeVisible();
+    await page.getByRole('link', {name: 'Начать играть'}).first().click();
+    await expect(page).toHaveURL(/\/start$/);
   });
 });

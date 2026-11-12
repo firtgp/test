@@ -1,11 +1,14 @@
 import {useEffect, useRef, useState} from 'react';
-import {aimCamera, createWorldScene, fitDistance, renderPoster, type Shot} from '../scenes/engine';
-import {SKY, buildWorld, type ScenePreset, type WorldId} from '../scenes/worlds';
+import type {Shot} from '../scenes/engine';
+import {SKY, type ScenePreset, type WorldId} from '../scenes/worlds';
+
+// Движок с three.js грузится отдельным файлом при первом обращении.
+const loadEngine = () => import('../scenes/engine');
 
 /**
  * Живая сцена из блоков. Один приём движения — медленный облёт камеры.
- * Three.js подгружается отдельно; без WebGL остаётся градиент неба.
- * Сцена не рисуется вне экрана и в скрытой вкладке; при reduced motion — один кадр.
+ * Без WebGL остаётся градиент неба. Сцена не рисуется вне экрана и в скрытой вкладке;
+ * при reduced motion — один кадр.
  */
 export function VoxelScene({preset, className}: {preset: ScenePreset; className?: string}) {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -18,29 +21,26 @@ export function VoxelScene({preset, className}: {preset: ScenePreset; className?
     let disposed = false;
     let cleanup = () => {};
 
-    import('three')
-      .then(THREE => {
+    loadEngine()
+      .then(engine => {
         if (disposed) return;
-        let renderer: import('three').WebGLRenderer;
+        let renderer: ReturnType<typeof engine.createRenderer>;
         try {
-          renderer = new THREE.WebGLRenderer({antialias: true, alpha: true, powerPreference: 'high-performance'});
+          renderer = engine.createRenderer();
         } catch {
           return; // WebGL недоступен: остаётся градиент.
         }
-        const world = buildWorld(preset);
+        const world = engine.buildWorld(preset);
         const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        renderer.setClearColor(0x000000, 0);
-        renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.15;
         const canvas = renderer.domElement;
         canvas.setAttribute('aria-hidden', 'true');
         host.appendChild(canvas);
-        const built = createWorldScene(THREE, world);
+        const built = engine.createWorldScene(world);
 
-        const camera = new THREE.PerspectiveCamera(30, 1, 1, 400);
+        const camera = engine.createCamera();
         let distance = 80;
         const draw = (t: number) => {
-          aimCamera(camera, world, distance, {
+          engine.aimCamera(camera, world, distance, {
             angle: 0.55 + (reduce ? 0 : Math.sin(t / 9000) * 0.28),
             lift: 0.2 + (reduce ? 0 : Math.sin(t / 13000) * 0.04),
             // Мир стоит в верхней части кадра: нижнюю треть панели занимает подпись.
@@ -55,7 +55,7 @@ export function VoxelScene({preset, className}: {preset: ScenePreset; className?
           renderer.setSize(w, h, false);
           camera.aspect = w / h;
           // Мир вписывается по высоте; по ширине допускается обрезка краёв острова.
-          distance = fitDistance(camera, world, 1.45, 1.02);
+          distance = engine.fitDistance(camera, world, 1.45, 1.02);
           camera.updateProjectionMatrix();
           draw(performance.now());
         };
@@ -132,11 +132,14 @@ export function WorldPoster({
       entries => {
         if (!entries.some(e => e.isIntersecting)) return;
         io.disconnect();
-        renderPoster(world, width, height, JSON.parse(shotKey)).then(url => {
-          if (cancelled) return;
-          if (url) setSrc(url);
-          else setFailed(true); // нет WebGL: блок остаётся с цветным фоном
-        });
+        loadEngine()
+          .then(engine => engine.renderPoster(world, width, height, JSON.parse(shotKey)))
+          .catch(() => null)
+          .then(url => {
+            if (cancelled) return;
+            if (url) setSrc(url);
+            else setFailed(true); // нет WebGL: блок остаётся с цветным фоном
+          });
       },
       {rootMargin: '600px 0px'},
     );
@@ -148,7 +151,10 @@ export function WorldPoster({
   }, [world, width, height, shotKey]);
 
   return (
-    <span ref={ref} className={`mc-poster${src ? ' mc-poster--ready' : ''}${failed ? ' mc-poster--failed' : ''}${className ? ` ${className}` : ''}`} aria-hidden="true">
+    <span
+      ref={ref}
+      className={`mc-poster${src ? ' mc-poster--ready' : ''}${failed ? ' mc-poster--failed' : ''}${className ? ` ${className}` : ''}`}
+      aria-hidden="true">
       {src ? <img src={src} alt="" width={width} height={height} decoding="async" /> : null}
     </span>
   );

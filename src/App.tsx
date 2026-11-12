@@ -7,6 +7,7 @@ import {InternationalizationProvider} from '@astryxdesign/core/i18n';
 import ruRU from '@astryxdesign/core/locales/ru-RU.generated.js';
 import {themes, defaultThemeSlug} from './astryx-themes';
 import {RouterLink} from './app/RouterLink';
+import {LazyBoundary} from './components/LazyBoundary';
 import {Shell} from './app/Shell';
 import {keys} from './app/hooks';
 import {backend} from './data';
@@ -59,6 +60,7 @@ export function App() {
             <AuthSync />
             <ScrollToTop />
             <Shell>
+              <LazyBoundary>
               <Suspense fallback={<p className="mc-page" role="status">Загрузка…</p>}>
               <Routes>
                 <Route path="/" element={<Home />} />
@@ -77,6 +79,7 @@ export function App() {
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>
               </Suspense>
+              </LazyBoundary>
             </Shell>
           </LinkProvider>
         </BrowserRouter>

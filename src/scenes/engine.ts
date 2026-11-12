@@ -1,9 +1,14 @@
 // Общий движок сцен: собирает мир из блоков и ставит камеру.
 // Им пользуются живые сцены первого экрана и статичные постеры остальных блоков.
-import type * as Three from 'three';
+// Модуль подгружается только динамически (import('../scenes/engine')), вместе с three.js:
+// в основной файл сайта он не попадает. Из three берутся именованные части, чтобы сборщик
+// отбросил неиспользуемое.
+import {
+  ACESFilmicToneMapping, AdditiveBlending, BoxGeometry, CanvasTexture, Color, DirectionalLight, Fog,
+  HemisphereLight, InstancedMesh, MeshBasicMaterial, MeshLambertMaterial, Object3D, PerspectiveCamera,
+  PointLight, Scene, Sprite, SpriteMaterial, WebGLRenderer,
+} from 'three';
 import {buildWorld, type World, type WorldId} from './worlds';
-
-type T = typeof Three;
 
 export interface Shot {
   /** Поворот камеры вокруг мира, радианы. */
@@ -16,24 +21,37 @@ export interface Shot {
   drop?: number;
 }
 
-export function createWorldScene(THREE: T, world: World) {
-  const scene = new THREE.Scene();
-  scene.fog = new THREE.Fog(world.fog, 90, 260);
-  scene.add(new THREE.HemisphereLight(world.hemi[0], world.hemi[1], 1.5));
-  const sun = new THREE.DirectionalLight(world.sun, 2.4);
+/** Создаёт WebGL-рендерер с общими настройками; бросает исключение, если WebGL недоступен. */
+export function createRenderer(options: {preserveDrawingBuffer?: boolean} = {}) {
+  const renderer = new WebGLRenderer({antialias: true, alpha: true, powerPreference: 'high-performance', ...options});
+  renderer.setClearColor(0x000000, 0);
+  renderer.toneMapping = ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.15;
+  return renderer;
+}
+
+export function createCamera(aspect = 1) {
+  return new PerspectiveCamera(30, aspect, 1, 600);
+}
+
+export function createWorldScene(world: World) {
+  const scene = new Scene();
+  scene.fog = new Fog(world.fog, 90, 260);
+  scene.add(new HemisphereLight(world.hemi[0], world.hemi[1], 1.5));
+  const sun = new DirectionalLight(world.sun, 2.4);
   sun.position.set(-14, 22, 16);
   scene.add(sun);
   for (const l of world.lights) {
-    const p = new THREE.PointLight(l.color, l.intensity, l.distance, 1.6);
+    const p = new PointLight(l.color, l.intensity, l.distance, 1.6);
     p.position.set(l.x, l.y, l.z);
     scene.add(p);
   }
 
-  const geometry = new THREE.BoxGeometry(1, 1, 1);
-  const dummy = new THREE.Object3D();
-  const color = new THREE.Color();
+  const geometry = new BoxGeometry(1, 1, 1);
+  const dummy = new Object3D();
+  const color = new Color();
   const hsl = {h: 0, s: 0, l: 0};
-  const fill = (mesh: Three.InstancedMesh, list: World['voxels'], jitter: number) => {
+  const fill = (mesh: InstancedMesh, list: World['voxels'], jitter: number) => {
     list.forEach((v, i) => {
       dummy.position.set(v.x, v.y, v.z);
       dummy.updateMatrix();
@@ -49,13 +67,13 @@ export function createWorldScene(THREE: T, world: World) {
   };
   const matte = world.voxels.filter(v => !v.glow);
   const lit = world.voxels.filter(v => v.glow);
-  const matteMat = new THREE.MeshLambertMaterial();
-  const matteMesh = new THREE.InstancedMesh(geometry, matteMat, Math.max(1, matte.length));
+  const matteMat = new MeshLambertMaterial();
+  const matteMesh = new InstancedMesh(geometry, matteMat, Math.max(1, matte.length));
   matteMesh.count = matte.length;
   fill(matteMesh, matte, 0.035);
   scene.add(matteMesh);
-  const litMat = new THREE.MeshBasicMaterial({toneMapped: false});
-  const litMesh = new THREE.InstancedMesh(geometry, litMat, Math.max(1, lit.length));
+  const litMat = new MeshBasicMaterial({toneMapped: false});
+  const litMesh = new InstancedMesh(geometry, litMat, Math.max(1, lit.length));
   litMesh.count = lit.length;
   fill(litMesh, lit, 0.05);
   scene.add(litMesh);
@@ -70,14 +88,14 @@ export function createWorldScene(THREE: T, world: World) {
   grad.addColorStop(1, 'rgba(255,255,255,0)');
   g.fillStyle = grad;
   g.fillRect(0, 0, 128, 128);
-  const glowTex = new THREE.CanvasTexture(glowCanvas);
-  const glowMats: Three.SpriteMaterial[] = [];
+  const glowTex = new CanvasTexture(glowCanvas);
+  const glowMats: SpriteMaterial[] = [];
   for (const gl of world.glows) {
-    const m = new THREE.SpriteMaterial({
-      map: glowTex, color: gl.color, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.55, fog: false,
+    const m = new SpriteMaterial({
+      map: glowTex, color: gl.color, blending: AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.55, fog: false,
     });
     glowMats.push(m);
-    const s = new THREE.Sprite(m);
+    const s = new Sprite(m);
     s.position.set(gl.x, gl.y, gl.z);
     s.scale.setScalar(gl.size);
     scene.add(s);
@@ -98,20 +116,22 @@ export function createWorldScene(THREE: T, world: World) {
 }
 
 /** Расстояние, с которого мир помещается в кадр с данным соотношением сторон. */
-export function fitDistance(camera: Three.PerspectiveCamera, world: World, fit: number, fitWidth: number) {
+export function fitDistance(camera: PerspectiveCamera, world: World, fit: number, fitWidth: number) {
   const v = (camera.fov * Math.PI) / 360;
   const hFov = Math.atan(Math.tan(v) * camera.aspect);
   return Math.max((world.halfHeight * fit) / Math.tan(v), (world.halfWidth * fitWidth) / Math.tan(hFov));
 }
 
-export function aimCamera(camera: Three.PerspectiveCamera, world: World, distance: number, shot: Required<Pick<Shot, 'angle' | 'lift' | 'drop'>>) {
+export function aimCamera(camera: PerspectiveCamera, world: World, distance: number, shot: Required<Pick<Shot, 'angle' | 'lift' | 'drop'>>) {
   camera.position.set(Math.sin(shot.angle) * distance, world.focusY + distance * shot.lift, Math.cos(shot.angle) * distance);
   camera.lookAt(0, world.focusY - world.halfHeight * shot.drop, 0);
 }
 
+export {buildWorld};
+
 // ---------- постеры ----------
 const posters = new Map<string, Promise<string | null>>();
-let shared: {THREE: T; renderer: Three.WebGLRenderer} | null | undefined;
+let shared: WebGLRenderer | null | undefined;
 let queue: Promise<unknown> = Promise.resolve();
 
 /**
@@ -127,24 +147,19 @@ export function renderPoster(id: WorldId, width: number, height: number, shot: S
       try {
         if (shared === undefined) {
           try {
-            const THREE = await import('three');
-            const renderer = new THREE.WebGLRenderer({antialias: true, alpha: true, preserveDrawingBuffer: true});
-            renderer.setClearColor(0x000000, 0);
-            renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            renderer.toneMappingExposure = 1.15;
-            shared = {THREE, renderer};
+            shared = createRenderer({preserveDrawingBuffer: true});
           } catch {
             shared = null;
           }
         }
         if (!shared) return null;
-        const {THREE, renderer} = shared;
+        const renderer = shared;
         const world = buildWorld(id);
-        const built = createWorldScene(THREE, world);
+        const built = createWorldScene(world);
         built.scene.fog = null; // постер стоит на цветном поле — дымка не нужна
         renderer.setPixelRatio(1);
         renderer.setSize(width, height, false);
-        const camera = new THREE.PerspectiveCamera(30, width / height, 1, 600);
+        const camera = createCamera(width / height);
         const distance = fitDistance(camera, world, shot.fit ?? 1.15, shot.fit ?? 1.15);
         aimCamera(camera, world, distance, {angle: shot.angle ?? 0.55, lift: shot.lift ?? 0.2, drop: shot.drop ?? 0});
         renderer.render(built.scene, camera);
