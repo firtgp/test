@@ -3,13 +3,13 @@ import {Link} from 'react-router';
 import {ArrowRightIcon} from '@phosphor-icons/react';
 import {BorderBeam} from '@/components/ui/border-beam';
 import {MagicCard} from '@/components/ui/magic-card';
-import {formatDateTime} from '../../app/format';
+import {formatDateTime, serverAddress} from '../../app/format';
 import {deriveStatus, type DisplayStatus} from '../../data/status';
-import type {ServerView, SiteSettings} from '../../data/types';
+import {LOADER_LABEL, type ServerView, type SiteSettings} from '../../data/types';
 import {startPath} from '../CtaLink';
 import {accentStyle, packLine} from '../ServerCard';
 import {StatusLine} from '../StatusLine';
-import {VoxelScene} from '../VoxelScene';
+import {WorldPoster} from '../VoxelScene';
 
 /** Обратный отсчёт до вайпа. Точная дата продублирована текстом рядом. */
 function Countdown({to}: {to: string}) {
@@ -66,9 +66,18 @@ function OnlineMeter({status}: {status: DisplayStatus}) {
 function Tile({server, settings, now, featured}: {server: ServerView; settings: SiteSettings; now: number; featured: boolean}) {
   const status = deriveStatus(server, server.status, now);
   const wipeSoon = server.next_wipe_at && Date.parse(server.next_wipe_at) > now ? server.next_wipe_at : null;
+  // Размер названия подбирается по самому длинному слову, чтобы оно не рвалось посередине.
+  const longest = Math.max(4, ...server.name.split(/\s+/).map(w => w.length));
+  const pack = server.modpack;
   return (
-    <li className={`mc-tile2${featured ? ' mc-tile2--lead' : ''}`} style={accentStyle(server.accent)}>
-      {featured ? <VoxelScene preset={server.scene ?? 'survival'} className="mc-tile2__art" /> : null}
+    <li className={`mc-tile2${featured ? ' mc-tile2--lead' : ''}`} style={{...accentStyle(server.accent), ['--name-len' as string]: longest}}>
+      <WorldPoster
+        world={server.scene ?? 'survival'}
+        className="mc-tile2__art"
+        width={featured ? 900 : 640}
+        height={featured ? 1000 : 640}
+        shot={{angle: featured ? 0.5 : 0.75, fit: featured ? 1.08 : 1.12}}
+      />
       <MagicCard className="mc-tile2__card" gradientColor={`${server.accent}26`} gradientFrom={server.accent} gradientTo={server.accent} gradientSize={featured ? 420 : 280}>
         <span className="mc-tile2__inner">
           <span className="mc-tile2__head">
@@ -98,12 +107,48 @@ function Tile({server, settings, now, featured}: {server: ServerView; settings: 
               {server.key_mods.slice(0, featured ? 5 : 3).map(m => (
                 <li key={m}>{m}</li>
               ))}
-              {server.mod_count > server.key_mods.length ? <li className="mc-tile2__more">+{server.mod_count - server.key_mods.length}</li> : null}
+              {server.mod_count > server.key_mods.length ? <li className="mc-tile2__more-mods">+{server.mod_count - server.key_mods.length}</li> : null}
             </ul>
           ) : null}
-          <Link className="mc-tile2__go" to={startPath(server.slug)} aria-label={`Играть на «${server.name}»`}>
-            Играть <ArrowRightIcon size={18} weight="bold" aria-hidden="true" />
-          </Link>
+          {featured ? (
+            <dl className="mc-tile2__facts">
+              {server.mode ? (
+                <div>
+                  <dt>Режим</dt>
+                  <dd>{server.mode}</dd>
+                </div>
+              ) : null}
+              {pack ? (
+                <div>
+                  <dt>Загрузчик</dt>
+                  <dd>
+                    {LOADER_LABEL[pack.loader]}
+                    {pack.java_version ? `, Java ${pack.java_version}` : ''}
+                  </dd>
+                </div>
+              ) : null}
+              {server.wipe_policy ? (
+                <div className="mc-tile2__fact--wide">
+                  <dt>Вайпы</dt>
+                  <dd>{server.wipe_policy}</dd>
+                </div>
+              ) : null}
+            </dl>
+          ) : null}
+          <span className="mc-tile2__foot">
+            <Link className="mc-tile2__go" to={startPath(server.slug)} aria-label={`Играть на «${server.name}»`}>
+              Играть <ArrowRightIcon size={18} weight="bold" aria-hidden="true" />
+            </Link>
+            <Link className="mc-tile2__more" to={`/servers/${server.slug}`} aria-label={`О сервере «${server.name}»`}>
+              О сервере
+            </Link>
+            {featured ? (
+              <span className="mc-tile2__addr">
+                <span className="mc-tile2__label">Адрес</span>
+                {serverAddress(server.host, server.port)}
+              </span>
+            ) : null}
+          </span>
         </span>
       </MagicCard>
       {featured ? <BorderBeam size={160} duration={9} borderWidth={2} colorFrom={server.accent} colorTo="transparent" /> : null}
@@ -111,7 +156,7 @@ function Tile({server, settings, now, featured}: {server: ServerView; settings: 
   );
 }
 
-/** Серверы плиткой: крупная карточка — у сервера с ближайшим вайпом. */
+/** Серверы плиткой: крупная карточка — у сервера с ближайшим вайпом. У каждой карточки постер её мира. */
 export function ServerBento({servers, settings, now}: {servers: ServerView[]; settings: SiteSettings; now: number}) {
   const withWipe = servers
     .filter(s => s.next_wipe_at && Date.parse(s.next_wipe_at) > now)

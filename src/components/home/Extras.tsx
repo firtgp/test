@@ -9,18 +9,27 @@ import {FlickeringGrid} from '@/components/ui/flickering-grid';
 import {formatDateTime} from '../../app/format';
 import {NEWS_KIND_LABEL, type NewsItem, type ServerView, type SiteSettings} from '../../data/types';
 import {startPath} from '../CtaLink';
+import {WorldPoster} from '../VoxelScene';
 
-/** Новости: крупные даты вместо пустых карточек; у главной — «живая» обложка (Magic UI FlickeringGrid). */
+/**
+ * Новости: крупные даты, у главной — постер мира её сервера и «живая» обложка (Magic UI FlickeringGrid).
+ * Правая колонка всегда заполнена: вторая и третья новость, а если третьей нет — плитка «Все новости».
+ */
 export function NewsBlock({items, servers, settings}: {items: NewsItem[]; servers: ServerView[]; settings: SiteSettings}) {
+  const shown = items.slice(0, 3);
   return (
-    <ul className={`mc-news2${items.length < 3 ? ' mc-news2--pair' : ''}`}>
-      {items.slice(0, 3).map((n, i) => {
-        const accent = servers.find(s => s.id === n.server_id)?.accent;
+    <ul className={`mc-news2${shown.length === 1 ? ' mc-news2--solo' : ''}`}>
+      {shown.map((n, i) => {
+        const server = servers.find(s => s.id === n.server_id);
+        const accent = server?.accent;
         const date = n.event_at ?? n.published_at;
         return (
           <li key={n.id} className={`mc-news2__item${i === 0 ? ' mc-news2__item--lead' : ''}`} style={accent ? {['--server-accent' as string]: accent} : undefined}>
             {i === 0 ? (
               <FlickeringGrid className="mc-news2__cover" squareSize={6} gridGap={8} flickerChance={0.3} maxOpacity={0.6} color={accent ?? '#F2B544'} />
+            ) : null}
+            {i === 0 && server ? (
+              <WorldPoster world={server.scene ?? 'survival'} className="mc-news2__art" width={800} height={800} shot={{angle: -0.5, fit: 1.1}} />
             ) : null}
             {date ? (
               <span className="mc-news2__date" aria-hidden="true">
@@ -40,6 +49,15 @@ export function NewsBlock({items, servers, settings}: {items: NewsItem[]; server
           </li>
         );
       })}
+      {shown.length === 2 ? (
+        <li className="mc-news2__all">
+          <Link to="/news">
+            <span className="mc-news2__all-title">Все новости</span>
+            <span className="mc-news2__all-text">Вайпы, запуски, техработы и ивенты</span>
+            <ArrowRightIcon size={28} weight="bold" aria-hidden="true" />
+          </Link>
+        </li>
+      ) : null}
     </ul>
   );
 }

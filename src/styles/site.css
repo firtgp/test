@@ -504,7 +504,8 @@ body {
 
 /* ================= главная: блоки после первого экрана =================
    Язык блоков — «блочный брутализм» (рекомендация UI/UX Pro Max при высокой вариативности):
-   прямые углы, видимая сетка, толстые границы, крупные числа. Движение — компоненты Magic UI. */
+   прямые углы, толстые границы, жёсткие тени, крупные числа. Движение — компоненты Magic UI.
+   У каждого блока своя картинка: постеры миров рисует тот же движок, что и первый экран. */
 
 /* ---------- бегущие строки модов ---------- */
 .mc-ticker {
@@ -601,11 +602,49 @@ body {
 .mc-band {
   position: relative;
   isolation: isolate;
-  padding: clamp(4rem, 3rem + 5vw, 7.5rem) var(--mc-gutter);
+  padding: clamp(3rem, 2rem + 4vw, 5.5rem) var(--mc-gutter);
 }
 .mc-band--raised {
   background: var(--color-background-surface);
   border-block: 2px solid var(--color-border-emphasized);
+}
+/* Тёмные секции не плоские: цветные свечения в тонах сборок. */
+.mc-band--glow {
+  background:
+    radial-gradient(46rem 26rem at 100% 0%, color-mix(in srgb, var(--mc-accent-techno) 16%, transparent), transparent 70%),
+    radial-gradient(40rem 24rem at 0% 100%, color-mix(in srgb, var(--mc-accent-magic) 14%, transparent), transparent 70%),
+    var(--color-background-body);
+}
+.mc-band--glow-b {
+  background:
+    radial-gradient(44rem 26rem at 0% 0%, color-mix(in srgb, var(--mc-accent-survival) 13%, transparent), transparent 70%),
+    radial-gradient(40rem 24rem at 100% 100%, color-mix(in srgb, var(--color-accent) 13%, transparent), transparent 70%),
+    var(--color-background-body);
+}
+/* Цветное поле с наклонными краями: продолжает наклон панелей первого экрана. */
+.mc-band--amber {
+  z-index: 1;
+  margin-block: 2.5vw;
+  color: var(--mc-cta-text);
+}
+.mc-band--amber::before {
+  content: '';
+  position: absolute;
+  inset: -4vw 0;
+  z-index: -1;
+  background: var(--color-accent);
+  transform: skewY(-1.6deg);
+}
+.mc-band--amber + .mc-band--raised {
+  border-block-start: 0;
+}
+.mc-band--amber .mc-title,
+.mc-band--amber .mc-eyebrow {
+  color: var(--mc-cta-text);
+}
+.mc-band--amber .mc-eyebrow__num {
+  background: var(--mc-cta-text);
+  color: var(--color-accent);
 }
 .mc-band__pattern {
   position: absolute;
@@ -622,6 +661,10 @@ body {
   grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
   gap: clamp(2rem, 1rem + 5vw, 6rem);
   align-items: center;
+}
+.mc-split--account {
+  grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr);
+  gap: clamp(2rem, 1rem + 3vw, 4rem);
 }
 .mc-split--faq {
   align-items: start;
@@ -681,6 +724,7 @@ body {
   gap: var(--spacing-4);
   max-width: 34rem;
   font-size: 1.0625rem;
+  font-weight: 600;
   line-height: 1.5;
 }
 .mc-checks li {
@@ -693,70 +737,139 @@ body {
   margin-block-start: 0.2em;
   padding: 3px;
   box-sizing: content-box;
-  background: var(--color-accent);
-  color: var(--mc-cta-text);
+  background: var(--mc-cta-text);
+  color: var(--color-accent);
+}
+.mc-btn-ink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  min-height: 3.25rem;
+  padding-inline: var(--spacing-6);
+  background: var(--mc-cta-text);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-heading);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 5px 5px 0 var(--mc-cta-bottom);
+  transition: transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
+}
+.mc-btn-ink:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 7px 7px 0 var(--mc-cta-bottom);
+}
+.mc-btn-ink:active {
+  transform: translate(3px, 3px);
+  box-shadow: none;
+}
+.mc-btn-ink:focus-visible {
+  outline: 3px solid var(--mc-cta-text);
+  outline-offset: 3px;
+}
+/* Постер мира: картинка с прозрачным фоном, появляется после отрисовки. */
+.mc-poster {
+  display: block;
+  pointer-events: none;
+}
+.mc-poster--failed {
+  display: none;
+}
+.mc-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  opacity: 0;
+  animation: mc-poster-in var(--duration-slow) var(--ease-entrance) forwards;
+}
+@keyframes mc-poster-in {
+  to { opacity: 1; }
 }
 
-/* ---------- схема «один аккаунт» ---------- */
+/* ---------- композиция «один аккаунт» ---------- */
 .mc-beams {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.25fr);
-  gap: clamp(1.25rem, 1rem + 2vw, 3rem);
-  min-height: 24rem;
-  padding: var(--spacing-6);
-  border: 2px solid var(--color-border-emphasized);
-  background: var(--color-background-body);
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.5fr) minmax(0, 1.15fr);
+  gap: clamp(0.75rem, 0.25rem + 2vw, 2.5rem);
+  align-items: center;
+  min-height: 26rem;
 }
 .mc-beams__col {
   display: flex;
   flex-direction: column;
-  justify-content: space-around;
-  gap: var(--spacing-6);
+  justify-content: center;
+  gap: clamp(1.25rem, 0.75rem + 2.5vw, 3.5rem);
+}
+.mc-beams__core {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+}
+.mc-beams__art {
+  width: 100%;
+  aspect-ratio: 1;
+  filter: drop-shadow(0 22px 26px color-mix(in srgb, var(--mc-cta-bottom) 75%, transparent));
+}
+.mc-beams__plate {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  margin-block-start: -2.25rem;
+  padding: var(--spacing-3) var(--spacing-5);
+  background: var(--mc-cta-text);
+  color: var(--color-text-primary);
+  box-shadow: 6px 6px 0 var(--mc-cta-bottom);
+  text-align: center;
+}
+.mc-beams__plate svg {
+  color: var(--color-accent);
 }
 .mc-node {
   position: relative;
   z-index: 1;
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: var(--spacing-2);
-  min-height: 3.5rem;
+  column-gap: var(--spacing-3);
+  min-height: 4rem;
   padding: var(--spacing-3) var(--spacing-4);
-  border: 2px solid var(--color-border-emphasized);
-  background: var(--color-background-surface);
+  border: 2px solid var(--mc-cta-text);
+  background: var(--mc-cta-text);
+  color: var(--color-text-primary);
+  box-shadow: 5px 5px 0 var(--mc-cta-bottom);
+}
+.mc-node svg {
+  color: var(--color-accent);
+}
+.mc-node__text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.mc-node__title {
   font-family: var(--font-family-heading);
-  font-size: 0.9375rem;
+  font-size: 1rem;
   font-weight: 600;
+  line-height: 1.15;
   overflow-wrap: break-word;
-  box-shadow: 4px 4px 0 var(--color-background-muted);
-}
-.mc-node--core {
-  flex-direction: column;
-  justify-content: center;
-  gap: var(--spacing-1);
-  min-height: 9rem;
-  border-color: var(--color-accent);
-  box-shadow: 6px 6px 0 var(--mc-cta-bottom);
-  text-align: center;
-}
-.mc-node--core svg {
-  color: var(--color-text-accent);
-}
-.mc-node__nick {
-  font-size: 1.125rem;
 }
 .mc-node__sub {
-  font-family: var(--font-family-body);
   font-size: 0.8125rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  line-height: 1.3;
   color: var(--color-text-secondary);
+}
+.mc-node__nick {
+  font-family: var(--font-family-heading);
+  font-size: 1.125rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
 }
 .mc-node--server {
   --server-accent: var(--color-accent);
   border-color: var(--server-accent);
-  box-shadow: 4px 4px 0 color-mix(in srgb, var(--server-accent) 45%, transparent);
 }
 .mc-node--server svg {
   color: var(--server-accent);
@@ -765,9 +878,9 @@ body {
 /* ---------- путь с макетом экрана ---------- */
 .mc-start {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
   gap: clamp(1.5rem, 1rem + 3vw, 4rem);
-  align-items: stretch;
+  align-items: center;
 }
 .mc-start__steps {
   list-style: none;
@@ -843,13 +956,33 @@ body {
   from { width: 0; }
   to { width: 100%; }
 }
+.mc-start__stage {
+  position: relative;
+  display: grid;
+  padding: var(--spacing-10) var(--spacing-6) var(--spacing-6) 0;
+}
+/* Крупный контурный номер шага за макетом. */
+.mc-start__ghost {
+  position: absolute;
+  inset-inline-end: 0;
+  inset-block-start: -0.34em;
+  z-index: -1;
+  font-family: var(--font-family-heading);
+  font-weight: 700;
+  font-size: clamp(8rem, 5rem + 11vw, 16rem);
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 2px color-mix(in srgb, var(--color-accent) 55%, transparent);
+  animation: mc-screen 420ms var(--ease-entrance) both;
+}
 .mc-mock {
   margin: 0;
   display: flex;
   flex-direction: column;
+  transform: rotate(-1.4deg);
   border: 2px solid var(--color-border-emphasized);
-  background: var(--color-background-body);
-  box-shadow: 10px 10px 0 var(--color-background-muted);
+  background: var(--color-background-surface);
+  box-shadow: 12px 12px 0 var(--color-accent);
 }
 .mc-mock__chrome {
   display: flex;
@@ -857,7 +990,7 @@ body {
   gap: var(--spacing-4);
   padding: var(--spacing-3) var(--spacing-4);
   border-block-end: 2px solid var(--color-border-emphasized);
-  background: var(--color-background-surface);
+  background: var(--color-background-body);
 }
 .mc-mock__lights {
   display: flex;
@@ -879,13 +1012,19 @@ body {
   color: var(--color-text-secondary);
 }
 .mc-mock__body {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: var(--spacing-3);
-  min-height: 19rem;
+  gap: var(--spacing-5);
+  min-height: 22rem;
   padding: clamp(1.25rem, 1rem + 2vw, 2.5rem);
+  background:
+    radial-gradient(26rem 18rem at 100% 0%, color-mix(in srgb, var(--color-accent) 20%, transparent), transparent 70%),
+    var(--mc-surface-raised);
   animation: mc-screen 420ms var(--ease-entrance) both;
 }
 @keyframes mc-screen {
@@ -894,63 +1033,52 @@ body {
 }
 .mc-mock__note {
   padding: var(--spacing-2) var(--spacing-4);
-  border-block-start: 1px solid var(--color-border);
+  border-block-start: 2px solid var(--color-border-emphasized);
+  background: var(--color-background-body);
   font-size: 0.8125rem;
   color: var(--color-text-secondary);
 }
-.mc-mock__field {
+.mc-mock__hero {
   display: grid;
-  gap: var(--spacing-1);
-}
-.mc-mock__label {
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-text-secondary);
-}
-.mc-mock__value {
-  padding: var(--spacing-3) var(--spacing-4);
-  border: 2px solid var(--color-border-emphasized);
-  background: var(--color-background-surface);
-  font-family: var(--font-family-code);
-  font-size: 0.9375rem;
-  overflow-wrap: anywhere;
-}
-.mc-mock__btn {
-  display: inline-flex;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--spacing-5);
   align-items: center;
-  justify-content: center;
-  gap: var(--spacing-2);
-  align-self: flex-start;
-  min-height: 3rem;
-  margin-block-start: var(--spacing-2);
-  padding-inline: var(--spacing-6);
+}
+.mc-mock__logo {
+  display: grid;
+  place-items: center;
+  width: 6.5rem;
+  height: 6.5rem;
   background: var(--mc-cta-face);
   color: var(--mc-cta-text);
-  font-family: var(--font-family-heading);
-  font-size: 0.9375rem;
-  font-weight: 600;
-  box-shadow: inset 0 3px 0 var(--mc-cta-top), inset 0 -4px 0 var(--mc-cta-bottom);
+  box-shadow:
+    inset 0 4px 0 var(--mc-cta-top),
+    inset 0 -6px 0 var(--mc-cta-bottom),
+    6px 6px 0 var(--color-background-body);
+}
+.mc-mock__col {
+  display: grid;
+  gap: var(--spacing-3);
+  min-width: 0;
 }
 .mc-mock__file {
   display: inline-flex;
   align-items: center;
   gap: var(--spacing-3);
   font-family: var(--font-family-code);
-  font-size: 1.0625rem;
+  font-size: 1.125rem;
 }
 .mc-mock__bar {
   display: block;
-  height: 1rem;
+  height: 1.25rem;
   border: 2px solid var(--color-border-emphasized);
+  background: var(--color-background-body);
 }
 .mc-mock__bar-fill {
   display: block;
   height: 100%;
   width: 100%;
   background: repeating-linear-gradient(90deg, var(--color-accent) 0 0.75rem, transparent 0.75rem 1rem);
-  transform-origin: 0 50%;
   animation: mc-load 2600ms steps(18) both;
 }
 @keyframes mc-load {
@@ -965,16 +1093,130 @@ body {
 .mc-mock__chips span {
   padding: var(--spacing-1) var(--spacing-3);
   border: 2px solid var(--color-border-emphasized);
+  background: var(--color-background-body);
   font-size: 0.875rem;
   font-weight: 600;
+}
+.mc-mock__list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-3);
+}
+.mc-mock__list span {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3);
+  border: 2px solid var(--color-border-emphasized);
+  background: var(--color-background-body);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.mc-mock__list svg {
+  flex: none;
+  color: var(--mc-status-online);
+}
+.mc-mock__cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
+  gap: var(--spacing-5);
+  align-items: stretch;
+}
+.mc-mock__aside {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: var(--spacing-3);
+  padding: var(--spacing-5);
+  background: var(--color-accent);
+  color: var(--mc-cta-text);
+  font-family: var(--font-family-heading);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.25;
+  box-shadow: 6px 6px 0 var(--color-background-body);
+}
+.mc-mock__field {
+  display: grid;
+  gap: var(--spacing-1);
+}
+.mc-mock__label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+.mc-mock__value {
+  padding: var(--spacing-2) var(--spacing-3);
+  border: 2px solid var(--color-border-emphasized);
+  background: var(--color-background-body);
+  font-family: var(--font-family-code);
+  font-size: 0.9375rem;
+  overflow-wrap: anywhere;
+}
+.mc-mock__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+  align-self: flex-start;
+  justify-self: start;
+  min-height: 2.75rem;
+  margin-block-start: var(--spacing-1);
+  padding-inline: var(--spacing-5);
+  background: var(--mc-cta-face);
+  color: var(--mc-cta-text);
+  font-family: var(--font-family-heading);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  box-shadow: inset 0 3px 0 var(--mc-cta-top), inset 0 -4px 0 var(--mc-cta-bottom);
+}
+/* Экраны лаунчера: постер мира на фоне, панель входа слева. */
+.mc-mock__art {
+  position: absolute;
+  inset-inline-end: -6%;
+  inset-block-end: -8%;
+  z-index: -1;
+  width: 86%;
+  aspect-ratio: 1000 / 450;
+}
+.mc-mock__art--solo {
+  inset-inline-end: -4%;
+  inset-block-end: -10%;
+  width: 60%;
+  aspect-ratio: 1;
+}
+.mc-mock__panel {
+  display: grid;
+  gap: var(--spacing-3);
+  align-content: center;
+  width: min(19rem, 58%);
+  padding: var(--spacing-5);
+  border: 2px solid var(--color-border-emphasized);
+  background: color-mix(in srgb, var(--color-background-body) 90%, transparent);
+  box-shadow: 6px 6px 0 color-mix(in srgb, var(--color-background-body) 55%, transparent);
+}
+.mc-mock__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-family: var(--font-family-heading);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.mc-mock__brand svg {
+  flex: none;
+  color: var(--color-accent);
 }
 .mc-mock__server {
   --server-accent: var(--color-accent);
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--spacing-3);
-  padding: var(--spacing-3) var(--spacing-4);
+  padding: var(--spacing-2) var(--spacing-3);
   border: 2px solid var(--color-border-emphasized);
   background: var(--color-background-surface);
 }
@@ -989,13 +1231,15 @@ body {
 }
 .mc-mock__sname {
   font-family: var(--font-family-heading);
+  font-size: 0.9375rem;
   font-weight: 600;
   overflow-wrap: anywhere;
 }
 .mc-mock__sinfo {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   color: var(--color-text-secondary);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 /* ---------- серверы плиткой ---------- */
@@ -1010,11 +1254,15 @@ body {
 .mc-tile2 {
   --server-accent: var(--color-accent);
   position: relative;
+  overflow: hidden;
+  container-type: inline-size;
   grid-column: span 5;
   display: flex;
   border: 2px solid var(--color-border-emphasized);
   border-block-start: 6px solid var(--server-accent);
-  background: var(--color-background-body);
+  background:
+    radial-gradient(28rem 20rem at 100% 100%, color-mix(in srgb, var(--server-accent) 26%, transparent), transparent 72%),
+    var(--color-background-body);
 }
 .mc-tile2--lead {
   grid-column: span 7;
@@ -1023,18 +1271,19 @@ body {
 .mc-tile2:only-child {
   grid-column: 1 / -1;
 }
-/* У главной плитки справа — сцена её мира, слева текст. */
 .mc-tile2__art {
-  inset: 0 0 0 46%;
-  mask-image: linear-gradient(90deg, transparent 0%, black 38%);
+  position: absolute;
+  inset-block-end: -6%;
+  inset-inline-end: -3%;
+  width: 34%;
+  aspect-ratio: 1;
 }
-.mc-tile2--lead .mc-tile2__inner {
-  padding-inline-end: 48%;
-}
-/* У MagicCard фон задан inline-стилем, поэтому здесь нужен !important. */
-.mc-tile2--lead .mc-tile2__card,
-.mc-tile2--lead .mc-tile2__card > .bg-background {
-  background: transparent !important;
+.mc-tile2--lead .mc-tile2__art {
+  inset-block: 2% auto;
+  inset-inline-end: -4%;
+  width: 56%;
+  height: 96%;
+  aspect-ratio: auto;
 }
 .mc-tile2__card {
   flex: 1;
@@ -1044,15 +1293,25 @@ body {
 .mc-tile2__card > div {
   border-radius: 0;
 }
+/* У MagicCard фон задан inline-стилем; плитка показывает собственный фон и постер. */
+.mc-tile2__card,
 .mc-tile2__card > .bg-background {
-  background: var(--color-background-body);
+  background: transparent !important;
+}
+.mc-tile2__card > div:last-child {
+  height: 100%;
 }
 .mc-tile2__inner {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-5);
   height: 100%;
+  box-sizing: border-box;
   padding: clamp(1.25rem, 1rem + 1.5vw, 2.5rem);
+  padding-inline-end: 32%;
+}
+.mc-tile2--lead .mc-tile2__inner {
+  padding-inline-end: 50%;
 }
 .mc-tile2__head {
   display: grid;
@@ -1069,13 +1328,14 @@ body {
   margin: 0;
   font-family: var(--font-family-heading);
   font-weight: 700;
-  font-size: clamp(1.5rem, 1.1rem + 1.4vw, 2.25rem);
+  /* Размер считается от ширины плитки и длины самого длинного слова (--name-len). */
+  font-size: clamp(1.125rem, calc((68cqi - 3rem) / (var(--name-len, 6) * 1.06)), 2.25rem);
   line-height: 1.05;
   text-transform: uppercase;
   overflow-wrap: anywhere;
 }
 .mc-tile2--lead .mc-tile2__name {
-  font-size: clamp(2rem, 1.2rem + 3vw, 4rem);
+  font-size: clamp(1.25rem, calc((50cqi - 3rem) / (var(--name-len, 6) * 1.06)), 4rem);
 }
 .mc-tile2__name a {
   color: var(--color-text-primary);
@@ -1117,6 +1377,7 @@ body {
   line-height: 1.4;
 }
 .mc-tile2__label {
+  font-family: var(--font-family-body);
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -1162,21 +1423,62 @@ body {
 .mc-tile2__mods li {
   padding: var(--spacing-1) var(--spacing-3);
   border: 1px solid var(--color-border-emphasized);
+  background: color-mix(in srgb, var(--color-background-body) 70%, transparent);
   font-size: 0.875rem;
   font-weight: 600;
 }
-.mc-tile2__mods .mc-tile2__more {
+.mc-tile2__mods .mc-tile2__more-mods {
   border-color: transparent;
+  background: transparent;
   color: var(--color-text-secondary);
+}
+.mc-tile2__facts {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-block-start: 2px solid var(--color-border-emphasized);
+  border-inline-start: 2px solid var(--color-border-emphasized);
+  background: color-mix(in srgb, var(--color-background-body) 70%, transparent);
+}
+.mc-tile2__facts div {
+  display: grid;
+  gap: var(--spacing-1);
+  align-content: start;
+  padding: var(--spacing-3);
+  border-block-end: 2px solid var(--color-border-emphasized);
+  border-inline-end: 2px solid var(--color-border-emphasized);
+}
+.mc-tile2__facts .mc-tile2__fact--wide {
+  grid-column: 1 / -1;
+}
+.mc-tile2__facts dt {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+.mc-tile2__facts dd {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.mc-tile2__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-3) var(--spacing-5);
+  margin-block-start: auto;
+  padding-block-start: var(--spacing-2);
 }
 .mc-tile2__go {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--spacing-2);
-  align-self: flex-start;
   min-height: 3rem;
-  margin-block-start: auto;
   padding-inline: var(--spacing-6);
   background: var(--server-accent);
   color: var(--mc-cta-text);
@@ -1194,6 +1496,25 @@ body {
 .mc-tile2__go:active {
   transform: translate(2px, 2px);
   box-shadow: none;
+}
+.mc-tile2__more {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  color: var(--color-text-primary);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+.mc-tile2__more:hover {
+  color: var(--server-accent);
+}
+.mc-tile2__addr {
+  display: grid;
+  gap: 2px;
+  font-family: var(--font-family-code);
+  font-size: 0.9375rem;
+  overflow-wrap: anywhere;
 }
 
 /* ---------- новости ---------- */
@@ -1224,20 +1545,36 @@ body {
   transform: translate(-3px, -3px);
   box-shadow: 6px 6px 0 color-mix(in srgb, var(--server-accent) 45%, transparent);
 }
-.mc-news2--pair .mc-news2__item--lead {
-  grid-row: auto;
-}
 .mc-news2__item--lead {
   grid-row: span 2;
   align-content: end;
   min-height: 24rem;
   padding: clamp(1.5rem, 1rem + 2vw, 3rem);
+  background:
+    radial-gradient(30rem 22rem at 100% 100%, color-mix(in srgb, var(--server-accent) 28%, transparent), transparent 72%),
+    var(--color-background-surface);
+}
+.mc-news2--solo .mc-news2__item--lead {
+  grid-column: 1 / -1;
+  grid-row: auto;
 }
 .mc-news2__cover {
   position: absolute;
   inset: 0;
   z-index: -1;
   mask-image: linear-gradient(200deg, black 5%, transparent 62%);
+}
+.mc-news2__art {
+  position: absolute;
+  inset-block-end: -14%;
+  inset-inline-end: -8%;
+  z-index: -1;
+  width: 58%;
+  aspect-ratio: 1;
+  mask-image: linear-gradient(90deg, transparent 0%, black 45%);
+}
+.mc-news2__item--lead .mc-news2__body {
+  max-width: 62%;
 }
 .mc-news2__date {
   display: grid;
@@ -1318,6 +1655,42 @@ body {
   color: var(--server-accent);
   transform: translate(3px, -3px);
 }
+/* Плитка «Все новости» занимает свободное место в правой колонке. */
+.mc-news2__all {
+  display: flex;
+}
+.mc-news2__all a {
+  position: relative;
+  flex: 1;
+  display: grid;
+  align-content: end;
+  gap: var(--spacing-2);
+  min-height: 10rem;
+  padding: var(--spacing-6);
+  background: var(--color-accent);
+  color: var(--mc-cta-text);
+  text-decoration: none;
+  box-shadow: 6px 6px 0 var(--mc-cta-bottom);
+  transition: transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
+}
+.mc-news2__all a:hover {
+  transform: translate(-3px, -3px);
+  box-shadow: 9px 9px 0 var(--mc-cta-bottom);
+}
+.mc-news2__all-title {
+  font-family: var(--font-family-heading);
+  font-weight: 700;
+  font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.5rem);
+  line-height: 1.05;
+}
+.mc-news2__all-text {
+  font-weight: 600;
+}
+.mc-news2__all svg {
+  position: absolute;
+  inset-block-start: var(--spacing-6);
+  inset-inline-end: var(--spacing-6);
+}
 
 /* ---------- вопросы ---------- */
 .mc-faq {
@@ -1331,35 +1704,73 @@ body {
   border-block-end: 2px solid var(--color-border-emphasized);
   font-size: 1.0625rem;
 }
+.mc-faq-side {
+  display: grid;
+  gap: var(--spacing-5);
+  align-content: start;
+}
+.mc-faq-side__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--spacing-6);
+}
+/* Крупный контурный знак вопроса — тот же приём, что и номер шага. */
+.mc-ghost-q {
+  font-family: var(--font-family-heading);
+  font-weight: 700;
+  font-size: clamp(9rem, 5rem + 12vw, 17rem);
+  line-height: 0.82;
+  color: transparent;
+  -webkit-text-stroke: 2px color-mix(in srgb, var(--color-accent) 50%, transparent);
+  user-select: none;
+}
 
-/* ---------- финальный призыв ---------- */
+/* ---------- финальный призыв: панорама трёх миров ---------- */
 .mc-final {
   position: relative;
   isolation: isolate;
   overflow: hidden;
+  display: grid;
+  /* Дорожка не растягивается под широкую картинку: текст остаётся в ширине экрана. */
+  grid-template-columns: minmax(0, 1fr);
+  padding: clamp(3rem, 2rem + 4vw, 5.5rem) var(--mc-gutter) 0;
+  border-block-start: 2px solid var(--color-accent);
+}
+.mc-final__grid {
+  inset: auto 0 0;
+  height: 46%;
+  z-index: -2;
+}
+.mc-final::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-background-body) 72%, transparent) 0%, transparent 46%);
+  pointer-events: none;
+}
+.mc-final__copy {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--spacing-8);
-  min-height: 26rem;
-  padding: clamp(3rem, 2rem + 5vw, 7rem) var(--mc-gutter);
-  border-block-start: 2px solid var(--color-accent);
-  background: var(--color-background-body);
-}
-.mc-final__grid {
-  inset: 0;
-  z-index: -1;
+  gap: var(--spacing-6) var(--spacing-8);
+  padding-block-end: var(--spacing-8);
 }
 .mc-final__title {
   margin: 0;
-  max-width: 44rem;
+  max-width: 62rem;
   font-family: var(--font-family-heading);
   font-weight: 700;
   font-size: clamp(2rem, 1.2rem + 3.6vw, 4.75rem);
   line-height: 1.02;
   letter-spacing: -0.03em;
   text-wrap: balance;
+}
+.mc-final__art {
+  margin-inline: calc(var(--mc-gutter) * -1);
+  margin-block-start: -2.5rem;
+  aspect-ratio: 2000 / 900;
 }
 
 /* ---------- закреплённая кнопка (телефон) ---------- */
@@ -1416,6 +1827,12 @@ body {
   .mc-final {
     padding-inline: var(--spacing-4);
   }
+  .mc-band--amber {
+    margin-block: var(--spacing-6);
+  }
+  .mc-band--amber::before {
+    inset: calc(var(--spacing-8) * -1) 0;
+  }
   .mc-footer .mc-page {
     padding-inline: var(--spacing-4);
   }
@@ -1433,77 +1850,139 @@ body {
     border-block-start: 2px solid var(--color-border-emphasized);
   }
   .mc-split,
+  .mc-split--account,
   .mc-start {
     grid-template-columns: minmax(0, 1fr);
   }
   .mc-beams {
-    gap: var(--spacing-4);
-    padding: var(--spacing-4);
-    min-height: 20rem;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1.1fr);
+    gap: var(--spacing-2);
+    min-height: 0;
   }
-  .mc-beams {
-    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr) minmax(0, 1.2fr);
-    gap: var(--spacing-3);
-    padding: var(--spacing-3);
+  .mc-beams__col {
+    gap: var(--spacing-5);
   }
   .mc-node {
+    grid-template-columns: minmax(0, 1fr);
     min-height: 3rem;
     padding: var(--spacing-2);
-    font-size: 0.75rem;
-    overflow-wrap: normal;
+    box-shadow: 3px 3px 0 var(--mc-cta-bottom);
   }
-  .mc-node__nick {
-    font-size: 0.875rem;
-  }
-  .mc-node__sub {
-    letter-spacing: 0;
-    font-size: 0.6875rem;
-  }
-  .mc-node svg {
+  .mc-node svg,
+  .mc-node .mc-node__sub {
     display: none;
   }
-  .mc-node--core svg {
-    display: block;
+  .mc-node__title {
+    font-size: 0.75rem;
+  }
+  .mc-beams__plate {
+    margin-block-start: -0.75rem;
+    padding: var(--spacing-2) var(--spacing-3);
+    box-shadow: 3px 3px 0 var(--mc-cta-bottom);
+  }
+  .mc-beams__plate svg {
+    display: none;
+  }
+  .mc-node__nick {
+    font-size: 0.8125rem;
+  }
+  .mc-beams__plate .mc-node__sub {
+    font-size: 0.6875rem;
+  }
+  .mc-start__stage {
+    margin-block-start: var(--spacing-8);
+    padding: var(--spacing-4) var(--spacing-3) var(--spacing-4) 0;
+  }
+  .mc-start__ghost {
+    inset-block-start: -0.5em;
   }
   .mc-mock__body {
-    min-height: 16rem;
+    min-height: 19rem;
+    padding: var(--spacing-4);
+  }
+  .mc-mock__cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .mc-mock__aside {
+    display: none;
+  }
+  .mc-mock__list {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--spacing-2);
+  }
+  .mc-mock__list span {
+    padding: var(--spacing-2) var(--spacing-3);
+  }
+  .mc-mock__logo {
+    width: 4.5rem;
+    height: 4.5rem;
+  }
+  .mc-mock__panel {
+    width: min(15rem, 72%);
+    padding: var(--spacing-3);
   }
   .mc-tile2,
   .mc-tile2--lead {
     grid-column: 1 / -1;
     grid-row: auto;
   }
-  .mc-tile2--lead {
-    flex-direction: column;
+  .mc-tile2__art,
+  .mc-tile2--lead .mc-tile2__art {
+    inset-block: auto -5%;
+    inset-inline-end: -8%;
+    width: 42%;
+    height: auto;
+    aspect-ratio: 1;
   }
-  .mc-tile2__art {
-    position: relative;
-    inset: auto;
-    height: 15rem;
-    mask-image: linear-gradient(180deg, black 60%, transparent 100%);
-  }
+  .mc-tile2__inner,
   .mc-tile2--lead .mc-tile2__inner {
     padding-inline-end: clamp(1.25rem, 1rem + 1.5vw, 2.5rem);
+  }
+  .mc-tile2__name,
+  .mc-tile2--lead .mc-tile2__name {
+    font-size: clamp(1.125rem, calc((100cqi - 3rem) / (var(--name-len, 6) * 1.06)), 2.25rem);
+  }
+  /* Нижние строки не заходят под постер. */
+  .mc-tile2__mods,
+  .mc-tile2__foot {
+    padding-inline-end: 34%;
   }
   .mc-count__cell {
     min-width: 0;
     flex: 1;
   }
   .mc-news2 {
-    grid-template-columns: 1fr;
-  }
-  .mc-news2__item--lead {
-    min-height: 18rem;
+    grid-template-columns: minmax(0, 1fr);
   }
   .mc-news2__item {
     gap: var(--spacing-4);
     padding: var(--spacing-4);
   }
+  /* У главной новости постер стоит под текстом, а не за ним. */
+  .mc-news2__item--lead {
+    grid-row: auto;
+    min-height: 0;
+    padding-block-end: 11rem;
+  }
+  .mc-news2__art {
+    inset-block-end: -1.5rem;
+    inset-inline-end: -0.5rem;
+    width: 12.5rem;
+    mask-image: none;
+  }
+  .mc-news2__item--lead .mc-news2__body {
+    max-width: none;
+  }
   .mc-news2__body {
     padding-inline-end: var(--spacing-6);
   }
-  .mc-final {
-    min-height: 20rem;
+  .mc-ghost-q {
+    display: none;
+  }
+  .mc-final__art {
+    width: 180%;
+    margin-inline: -40%;
+    margin-block-start: -1rem;
   }
   .mc-sticky {
     position: fixed;
@@ -1530,19 +2009,28 @@ body {
   .mc-scene canvas,
   .mc-news2__item,
   .mc-news2__arrow,
+  .mc-news2__all a,
   .mc-tile2__go,
+  .mc-btn-ink,
   .mc-sticky {
     transition: none;
   }
   .mc-news2__item:hover,
-  .mc-tile2__go:hover {
+  .mc-news2__all a:hover,
+  .mc-tile2__go:hover,
+  .mc-btn-ink:hover {
     transform: none;
   }
   /* Бегущие строки и прогресс шагов останавливаются; содержимое остаётся на месте. */
   .mc-ticker [class*='animate-marquee'],
   .mc-start__step--run .mc-start__progress,
   .mc-mock__body,
-  .mc-mock__bar-fill {
+  .mc-mock__bar-fill,
+  .mc-start__ghost {
     animation: none;
+  }
+  .mc-poster img {
+    animation: none;
+    opacity: 1;
   }
 }

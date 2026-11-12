@@ -401,8 +401,7 @@ test.describe('адаптация и доступность', () => {
   test('обычный режим: сцены трёх миров рисуются и движутся', async ({page}) => {
     await page.setViewportSize({width: 1280, height: 800});
     await page.goto('/');
-    // Три панели первого экрана и сцена на главной карточке сервера.
-    await expect(page.locator('.mc-scene--ready')).toHaveCount(4);
+    await expect(page.locator('.mc-scene--ready')).toHaveCount(3);
     const scene = page.locator('.mc-scene--ready').first();
     const before = await scene.screenshot();
     await page.waitForTimeout(1500);
@@ -447,5 +446,20 @@ test.describe('адаптация и доступность', () => {
     await sticky.getByRole('link', {name: 'Начать играть'}).click();
     await expect(page).toHaveURL(/\/start$/);
     await context.close();
+  });
+  test('постеры миров рисуются в блоках ниже первого экрана', async ({page}) => {
+    await page.setViewportSize({width: 1280, height: 800});
+    await page.goto('/');
+    // Постеры рисуются по мере приближения к экрану, поэтому листаем страницу, как человек.
+    const height = await page.evaluate(() => document.documentElement.scrollHeight);
+    for (let y = 0; y < height; y += 600) {
+      await page.evaluate(v => window.scrollTo(0, v), y);
+      await page.waitForTimeout(150);
+    }
+    // Узел аккаунта, три карточки серверов, новость и финальная панорама.
+    await expect.poll(() => page.locator('.mc-poster--ready').count(), {timeout: 15000}).toBeGreaterThanOrEqual(6);
+    const img = page.locator('.mc-final .mc-poster--ready img');
+    await expect(img).toBeVisible();
+    expect(await img.evaluate((el: HTMLImageElement) => el.naturalWidth)).toBe(2000);
   });
 });

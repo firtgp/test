@@ -342,15 +342,88 @@ function survival(): World {
   };
 }
 
-const cache = new Map<ScenePreset, World>();
-export function buildWorld(preset: ScenePreset): World {
-  let w = cache.get(preset);
+/** Узел аккаунта: маяк на площадке и три портала в цветах серверов. */
+function hub(portals: string[]): World {
+  const b = new Builder(rng(51));
+  const slab = ['#3a3f4b', '#424856', '#353a45'];
+  const deep = ['#23262e', '#2a2e37'];
+  const amber = '#ffc061';
+  b.island(9, 8, () => 0, dy => (dy === 0 ? slab : deep));
+  for (let a = 0; a < 40; a++) {
+    const t = (a / 40) * Math.PI * 2;
+    b.set(Math.round(Math.cos(t) * 5), 0, Math.round(Math.sin(t) * 5), a % 2 ? '#d6a531' : '#8a6d2c');
+  }
+  // Маяк.
+  b.box(-1, 1, -1, 1, 2, 1, ['#2a2e37']);
+  for (let y = 3; y <= 15; y++) b.set(0, y, 0, y % 4 === 3 ? '#fff0c8' : amber, true);
+  b.box(-1, 16, -1, 1, 16, 1, ['#fff0c8'], true);
+  b.glowAt(0, 9, 1, amber, 20);
+  b.glowAt(0, 16, 0, '#fff0c8', 9);
+  // Порталы.
+  portals.slice(0, 3).forEach((color, i) => {
+    const t = (-Math.PI / 2) + (i - 1) * 1.15;
+    const cx = Math.round(Math.cos(t) * -7.2);
+    const cz = Math.round(Math.sin(t) * -7.2) ;
+    const alongX = Math.abs(Math.cos(t)) < 0.5;
+    for (let a = 0; a < 24; a++) {
+      const u = (a / 24) * Math.PI * 2;
+      const du = Math.round(Math.cos(u) * 3);
+      const dy = Math.round(Math.sin(u) * 3);
+      b.set(cx + (alongX ? du : 0), 4 + dy, cz + (alongX ? 0 : du), b.pick(['#1c1f26', '#262a33']));
+    }
+    for (let du = -2; du <= 2; du++)
+      for (let dy = -2; dy <= 2; dy++)
+        if (Math.hypot(du, dy) <= 2.3) b.set(cx + (alongX ? du : 0), 4 + dy, cz + (alongX ? 0 : du), color, true);
+    b.glowAt(cx, 4, cz, color, 13);
+  });
+  return {
+    voxels: b.voxels(), glows: b.glows,
+    lights: [{x: 0, y: 8, z: 4, color: amber, intensity: 240, distance: 26}],
+    sky: ['#1a1406', '#4a3410', '#f2b544'], fog: '#3a2a10', sun: '#fff1cf', hemi: ['#ffe6b0', '#20180a'],
+    focusY: 6, halfHeight: 14, halfWidth: 11,
+  };
+}
+
+/** Панорама: три острова в одном кадре — для финального блока. */
+function panorama(): World {
+  const parts: [World, number, number, number][] = [
+    [techno(), -27, -3, 4],
+    [magic(), 0, 4, -8],
+    [survival(), 27, -2, 5],
+  ];
+  const voxels: Voxel[] = [];
+  const glows: Glow[] = [];
+  const lights: World['lights'] = [];
+  for (const [w, dx, dy, dz] of parts) {
+    for (const v of w.voxels) voxels.push({...v, x: v.x + dx, y: v.y + dy, z: v.z + dz});
+    for (const g of w.glows) glows.push({...g, x: g.x + dx, y: g.y + dy, z: g.z + dz});
+    for (const l of w.lights) lights.push({...l, x: l.x + dx, y: l.y + dy, z: l.z + dz});
+  }
+  return {
+    voxels, glows, lights,
+    sky: ['#0b1020', '#3a1f5c', '#f08a4b'], fog: '#3a2450', sun: '#ffe2c0', hemi: ['#e8c8ff', '#161020'],
+    focusY: 9, halfHeight: 22, halfWidth: 42,
+  };
+}
+
+export type WorldId = ScenePreset | 'panorama' | `hub:${string}`;
+
+const cache = new Map<string, World>();
+export function buildWorld(id: WorldId): World {
+  let w = cache.get(id);
   if (!w) {
-    w = preset === 'techno' ? techno() : preset === 'magic' ? magic() : survival();
-    cache.set(preset, w);
+    if (id === 'techno') w = techno();
+    else if (id === 'magic') w = magic();
+    else if (id === 'survival') w = survival();
+    else if (id === 'panorama') w = panorama();
+    else w = hub(id.slice(4).split(','));
+    cache.set(id, w);
   }
   return w;
 }
+
+/** Небо финального блока (панорама трёх миров). */
+export const PANORAMA_SKY: [string, string, string] = ['#0b1020', '#3a1f5c', '#f08a4b'];
 
 /** Небо доступно без WebGL: по нему строится запасной фон панели. */
 export const SKY: Record<ScenePreset, [string, string, string]> = {
