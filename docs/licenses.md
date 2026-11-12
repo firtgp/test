@@ -13,6 +13,10 @@
 | date-fns, date-fns-tz | 4.4.0, 3.2.0 | npm | MIT | |
 | Phosphor Icons (`@phosphor-icons/react`) | 2.1.10 | npm | MIT | Иконки |
 | three.js (`three`) | 0.170 | npm | MIT | Сцены первого экрана, грузится отдельным файлом |
+| Magic UI — `marquee`, `number-ticker`, `animated-beam`, `border-beam`, `blur-fade`, `retro-grid`, `flickering-grid`, `grid-pattern`, `magic-card` | коммит 039352a | github.com/magicuidesign/magicui, `apps/www/registry/magicui` | MIT | Файлы скопированы в `src/components/ui/` без правок: реестр shadcn из среды разработки недоступен |
+| Tailwind CSS, `@tailwindcss/vite` | 4.3.5 | npm | MIT | Нужен компонентам Magic UI; подключён по схеме слоёв из документации Astryx |
+| Motion (`motion`) | 14.13.0 | npm | MIT | Анимации компонентов Magic UI |
+| clsx, tailwind-merge | 2.1.1, 3.7.0 | npm | MIT | Утилита `cn` |
 | Шрифт Manrope (`@fontsource/manrope`) | 5.3.0 | npm | SIL OFL 1.1 | Кириллица есть, файлы в сборке |
 | Шрифт Unbounded (`@fontsource/unbounded`) | 5.3.0 | npm | SIL OFL 1.1 | Кириллица есть, файлы в сборке |
 

@@ -267,7 +267,7 @@ test.describe('админка', () => {
     await expect(page.getByText('Сохранено').first()).toBeVisible();
 
     await page.goto('/');
-    await expect(page.getByRole('heading', {name: 'Техно Сезон 2 с очень длинным названием сервера для проверки'})).toBeVisible();
+    await expect(page.getByRole('heading', {name: 'Техно Сезон 2 с очень длинным названием сервера для проверки'}).first()).toBeVisible();
     await expect(page.getByText('Техработы').first()).toBeVisible();
     await expect(page.getByText('до 20:00').first()).toBeVisible();
     await expect(page.getByText('31 декабря 2026, 21:30 МСК').first()).toBeVisible();
@@ -401,7 +401,8 @@ test.describe('адаптация и доступность', () => {
   test('обычный режим: сцены трёх миров рисуются и движутся', async ({page}) => {
     await page.setViewportSize({width: 1280, height: 800});
     await page.goto('/');
-    await expect(page.locator('.mc-scene--ready')).toHaveCount(3);
+    // Три панели первого экрана и сцена на главной карточке сервера.
+    await expect(page.locator('.mc-scene--ready')).toHaveCount(4);
     const scene = page.locator('.mc-scene--ready').first();
     const before = await scene.screenshot();
     await page.waitForTimeout(1500);
@@ -415,5 +416,36 @@ test.describe('адаптация и доступность', () => {
     const box = (await panel.boundingBox())!;
     await page.mouse.click(box.x + box.width / 2, box.y + box.height * 0.25);
     await expect(page).toHaveURL(/\/start\?server=magic$/);
+  });
+  test('живые блоки главной: отсчёт до вайпа идёт, шаги переключаются, вопросы раскрываются', async ({page}) => {
+    await page.setViewportSize({width: 1280, height: 800});
+    await page.goto('/');
+    const timer = page.getByRole('timer');
+    await timer.scrollIntoViewIfNeeded();
+    const before = await timer.getAttribute('aria-label');
+    expect(before).toMatch(/^До вайпа: \d+ дн \d+ ч \d+ мин \d+ сек$/);
+    await expect.poll(() => timer.getAttribute('aria-label'), {timeout: 4000}).not.toBe(before);
+    // Точная дата продублирована текстом.
+    await expect(page.getByText('До вайпа · 5 декабря 2026, 18:00 МСК')).toBeVisible();
+
+    await page.getByRole('button', {name: /Войдите в лаунчер/}).click();
+    await expect(page.getByRole('button', {name: /Войдите в лаунчер/})).toHaveAttribute('aria-current', 'step');
+    await expect(page.locator('.mc-mock__caption')).toHaveText('Лаунчер');
+
+    await page.getByRole('button', {name: 'Потеряю ли я вещи, если сменю ник?'}).click();
+    await expect(page.getByText('привязаны к постоянному UUID игрока')).toBeVisible();
+  });
+
+  test('телефон: закреплённая кнопка появляется после первого экрана', async ({browser}) => {
+    const context = await browser.newContext({viewport: {width: 390, height: 844}, hasTouch: true, isMobile: true});
+    const page = await context.newPage();
+    await page.goto('/');
+    const sticky = page.locator('.mc-sticky');
+    await expect(sticky).not.toHaveClass(/mc-sticky--on/);
+    await page.locator('.mc-start').scrollIntoViewIfNeeded();
+    await expect(sticky).toHaveClass(/mc-sticky--on/);
+    await sticky.getByRole('link', {name: 'Начать играть'}).click();
+    await expect(page).toHaveURL(/\/start$/);
+    await context.close();
   });
 });
