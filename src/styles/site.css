@@ -822,6 +822,9 @@ body {
   filter: drop-shadow(0 22px 26px color-mix(in srgb, var(--mc-cta-bottom) 75%, transparent));
 }
 .mc-beams__plate {
+  /* Табличка стоит поверх картинки: у картинки есть фильтр тени, и без этого её свечение ложилось бы на текст. */
+  position: relative;
+  z-index: 1;
   display: grid;
   justify-items: center;
   gap: 2px;
