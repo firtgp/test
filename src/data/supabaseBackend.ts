@@ -4,14 +4,15 @@ import {IMAGE_MAX_BYTES, IMAGE_TYPES} from './backend';
 import {SETTINGS_KEY, seedSettings} from './seed';
 import {
   AppError, avatarStyleSchema, contentSchemas, siteSettingsSchema,
-  type Account, type GalleryItem, type Mod, type Modpack, type NewsItem, type RulesVersion,
+  type Account, type ActivePrivilege, type GalleryItem, type LedgerEntry, type Mod, type Modpack, type NewsItem,
+  type Order, type Product, type RulesVersion,
   type Server, type ServerStatus, type ServerView, type StaffRole,
 } from './types';
 
-const AVATAR_KEY = 'mcsite-avatar-';
 const DB_CODES = [
   'nick_taken', 'nick_invalid', 'nick_cooldown', 'forbidden', 'not_authenticated',
   'user_not_found', 'last_owner', 'role_must_be_global',
+  'insufficient_funds', 'product_unavailable', 'server_required', 'idempotency_conflict', 'privilege_lower',
 ];
 
 function fromDb(e: PostgrestError): AppError {
@@ -134,7 +135,7 @@ export function createSupabaseBackend(url: string, anonKey: string): Backend {
         mc_uuid: p.mc_uuid,
         selected_server_id: p.selected_server_id,
         nick_changed_at: p.nick_changed_at,
-        avatar_style: avatarStyleSchema.catch('wanderer').parse(localStorage.getItem(`${AVATAR_KEY}${user.id}`)),
+        avatar_style: avatarStyleSchema.catch('wanderer').parse(p.avatar_style),
         roles: (check(roles) ?? []) as Account['roles'],
       };
     },
@@ -295,31 +296,51 @@ export function createSupabaseBackend(url: string, anonKey: string): Backend {
     },
 
     // ---------- кабинет ----------
-    // Серверной части магазина и баланса в этой версии нет: интерфейс показывает это прямо.
-    shop: false,
-    // Образ персонажа — настройка внешнего вида сайта: хранится в этом браузере.
+    // Баланс меняют только функции БД (supabase/migrations/0004_shop.sql): цена и сервер выдачи
+    // берутся из каталога, покупка идемпотентна по ключу. Пополнение за деньги здесь не вызывается:
+    // его зачисляет серверный обработчик webhook платёжного провайдера (confirm_payment).
+    shop: true,
     async setAvatarStyle(style) {
-      const {data} = await db.auth.getSession();
-      if (!data.session) throw new AppError('not_authenticated');
-      localStorage.setItem(`${AVATAR_KEY}${data.session.user.id}`, avatarStyleSchema.parse(style));
+      check(await db.rpc('set_avatar_style', {p_style: avatarStyleSchema.parse(style)}));
     },
-    async listProducts() {
-      return [];
+    async listProducts(includeUnpublished = false) {
+      let q = db.from('products').select('*').order('sort');
+      if (!includeUnpublished) q = q.eq('published', true);
+      return (check(await q) ?? []) as Product[];
     },
     async getWallet() {
-      return 0;
+      const row = check(await db.from('wallets').select('balance').maybeSingle()) as {balance: number} | null;
+      return row?.balance ?? 0;
     },
     async listLedger() {
-      return [];
+      return (check(
+        await db.from('wallet_ledger').select('id, delta, reason, title, balance_after, created_at').order('created_at', {ascending: false}).limit(50),
+      ) ?? []) as LedgerEntry[];
     },
     async listOrders() {
-      return [];
+      const {data} = await db.auth.getSession();
+      if (!data.session) throw new AppError('not_authenticated');
+      // Администратору политика показывает все заказы; в кабинете нужны только свои.
+      return (check(
+        await db
+          .from('orders')
+          .select('id, product_id, title, kind, icon, server_id, price, status, created_at')
+          .eq('user_id', data.session.user.id)
+          .order('created_at', {ascending: false})
+          .limit(100),
+      ) ?? []) as Order[];
     },
     async getPrivilege() {
-      return null;
+      return check(
+        await db.from('privileges').select('product_id, title, tier, expires_at').gt('expires_at', new Date().toISOString()).maybeSingle(),
+      ) as ActivePrivilege | null;
     },
-    async purchase() {
-      throw new AppError('shop_unavailable');
+    async purchase(productId, serverId, key) {
+      const o = check(await db.rpc('purchase', {p_product: productId, p_server: serverId, p_key: key})) as Order & Record<string, unknown>;
+      return {
+        id: o.id, product_id: o.product_id, title: o.title, kind: o.kind, icon: o.icon,
+        server_id: o.server_id, price: o.price, status: o.status, created_at: o.created_at,
+      };
     },
   };
 }

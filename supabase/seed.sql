@@ -3,7 +3,7 @@
 -- Повторное применение не затирает живые изменения.
 
 insert into public.site_settings (key, value)
-values ('site', '{"project_name":"Название проекта","hero_title":"Три мира на модах. Один аккаунт.","hero_lead":"Техника, магия и выживание на отдельных серверах. Скачайте лаунчер, создайте аккаунт — и заходите на любой.","timezone":"Europe/Moscow","timezone_label":"МСК","account_model":"launcher","launcher_name":"Лаунчер проекта","launcher_windows_url":"","launcher_macos_url":"","launcher_linux_url":"","discord_url":"","telegram_url":"","vk_url":"","contact_email":""}'::jsonb)
+values ('site', '{"project_name":"Название проекта","hero_title":"Три мира на модах. Один аккаунт.","hero_lead":"Техника, магия и выживание на отдельных серверах. Скачайте лаунчер, создайте аккаунт — и заходите на любой.","timezone":"Europe/Moscow","timezone_label":"МСК","account_model":"launcher","launcher_name":"Лаунчер проекта","launcher_windows_url":"","launcher_macos_url":"","launcher_linux_url":"","discord_url":"","telegram_url":"","vk_url":"","contact_email":"","currency_name":"Искры","currency_one":"искра","currency_few":"искры","currency_many":"искр"}'::jsonb)
 on conflict (key) do nothing;
 
 insert into public.modpacks (id, slug, name, loader, mc_version, loader_version, java_version, ram_min_mb, ram_recommended_mb, summary)
@@ -105,5 +105,47 @@ values ('50000000-0000-4000-8000-000000000001', 1, 'Первая редакци�
 
 5.1. Наказание выбирает персонал сервера в пределах своих прав.
 5.2. Обжаловать наказание можно через контакты проекта.')
+on conflict (id) do nothing;
+
+-- Каталог-пример: названия, цены и бонусы условные. Перед включением оплаты сверьте товары с правилами Mojang.
+
+insert into public.products (id, slug, kind, title, description, price, server_id, mod_name, icon, tier, duration_days, perks, compliance, sort, published)
+values ('60000000-0000-4000-8000-000000000001', 'tech-mechanic-kit', 'item', 'Набор механика', 'Валы, шестерни и водяное колесо — запустить первую линию.', 120, '20000000-0000-4000-8000-000000000001', 'Create', 'gear', 0, null, '{}'::text[], 'gameplay', 1, true)
+on conflict (id) do nothing;
+insert into public.products (id, slug, kind, title, description, price, server_id, mod_name, icon, tier, duration_days, perks, compliance, sort, published)
+values ('60000000-0000-4000-8000-000000000002', 'tech-industrial-drill', 'item', 'Промышленный бур', 'Копает за вас, пока вы строите завод.', 900, '20000000-0000-4000-8000-000000000001', 'Mekanism', 'drill', 0, null, '{}'::text[], 'gameplay', 2, true)
+on conflict (id) do nothing;
+insert into public.products (id, slug, kind, title, description, price, server_id, mod_name, icon, tier, duration_days, perks, compliance, sort, published)
+values ('60000000-0000-4000-8000-000000000003', 'tech-storage-cell', 'item', 'Накопитель данных', 'Ёмкая ячейка для сети хранения.', 450, '20000000-0000-4000-8000-000000000001', 'Applied Energistics 2', 'disk', 0, null, '{}'::text[], 'gameplay', 3, true)
+on conflict (id) do nothing;
+insert into public.products (id, slug, kind, title, description, price, server_id, mod_name, icon, tier, duration_days, perks, compliance, sort, published)
+values ('60000000-0000-4000-8000-000000000004', 'magic-apprentice-book', 'item', 'Книга ученика', 'Первые глифы и пустые страницы для своих заклинаний.', 150, '20000000-0000-4000-8000-000000000002', 'Ars Nouveau', 'book', 0, null, '{}'::text[], 'gameplay', 4, true)
+on conflict (id) do nothing;
+insert into public.products (id, slug, kind, title, description, price, server_id, mod_name, icon, tier, duration_days, perks, compliance, sort, published)
+values ('60000000-0000-4000-8000-000000000005', 'magic-mana-seedlings', 'item', 'Саженцы маны', 'Набор мистических цветов для первого сада.', 90, '20000000-0000-4000-8000-000000000002', 'Botania', 'flower', 0, null, '{}'::text[], 'gameplay', 5, true)
+on conflict (id) do nothing;
+insert into public.products (id, slug, kind, title, description, price, server_id, mod_name, icon, tier, duration_days, perks, compliance, sort, published)
+values ('60000000-0000-4000-8000-000000000006', 'magic-spell-scroll', 'item', 'Свиток заклинания', 'Редкое заклинание, которое не найти в начале игры.', 300, '20000000-0000-4000-8000-000000000002', 'Iron''s Spells ''n Spellbooks', 'scroll', 0, null, '{}'::text[], 'gameplay', 6, true)
+on conflict (id) do nothing;
+insert into public.products (id, slug, kind, title, description, price, server_id, mod_name, icon, tier, duration_days, perks, compliance, sort, published)
+values ('60000000-0000-4000-8000-000000000007', 'survival-farmer-basket', 'item', 'Корзина фермера', 'Семена, рассада и немного готовой еды в дорогу.', 60, '20000000-0000-4000-8000-000000000003', 'Farmer''s Delight', 'basket', 0, null, '{}'::text[], 'gameplay', 7, true)
+on conflict (id) do nothing;
+insert into public.products (id, slug, kind, title, description, price, server_id, mod_name, icon, tier, duration_days, perks, compliance, sort, published)
+values ('60000000-0000-4000-8000-000000000008', 'starter-tools', 'item', 'Набор новичка', 'Простые инструменты, чтобы не начинать с пустыми руками.', 50, null, '', 'pickaxe', 0, null, '{}'::text[], 'gameplay', 8, true)
+on conflict (id) do nothing;
+insert into public.products (id, slug, kind, title, description, price, server_id, mod_name, icon, tier, duration_days, perks, compliance, sort, published)
+values ('60000000-0000-4000-8000-000000000009', 'cosmetic-spark-trail', 'item', 'След искр', 'За вами тянется шлейф золотых искр. На игру не влияет.', 200, null, '', 'sparkles', 0, null, '{}'::text[], 'cosmetic', 9, true)
+on conflict (id) do nothing;
+insert into public.products (id, slug, kind, title, description, price, server_id, mod_name, icon, tier, duration_days, perks, compliance, sort, published)
+values ('60000000-0000-4000-8000-000000000010', 'cosmetic-decor-chest', 'item', 'Сундук украшений', 'Декоративные блоки и флаги для построек. На игру не влияет.', 140, null, '', 'chest', 0, null, '{}'::text[], 'cosmetic', 10, true)
+on conflict (id) do nothing;
+insert into public.products (id, slug, kind, title, description, price, server_id, mod_name, icon, tier, duration_days, perks, compliance, sort, published)
+values ('61000000-0000-4000-8000-000000000001', 'rank-seeker', 'privilege', 'Искатель', 'Первый ранг: заметный ник и немного удобства.', 300, null, '', 'sparkles', 1, 30, array['Цветной ник и значок в чате', 'Бирюзовая подсветка пьедестала персонажа на сайте', 'Две дополнительные точки дома']::text[], 'unchecked', 1, true)
+on conflict (id) do nothing;
+insert into public.products (id, slug, kind, title, description, price, server_id, mod_name, icon, tier, duration_days, perks, compliance, sort, published)
+values ('61000000-0000-4000-8000-000000000002', 'rank-master', 'privilege', 'Мастер', 'Для тех, кто играет каждый день.', 700, null, '', 'sparkles', 2, 30, array['Всё из ранга «Искатель»', 'Аура и кристаллы вокруг персонажа на сайте', 'Пять точек дома и личный варп', 'Косметические частицы в игре']::text[], 'unchecked', 2, true)
+on conflict (id) do nothing;
+insert into public.products (id, slug, kind, title, description, price, server_id, mod_name, icon, tier, duration_days, perks, compliance, sort, published)
+values ('61000000-0000-4000-8000-000000000003', 'rank-legend', 'privilege', 'Легенда', 'Высший ранг проекта.', 1500, null, '', 'sparkles', 3, 30, array['Всё из ранга «Мастер»', 'Золотой пьедестал и вихрь искр у персонажа на сайте', 'Золотой ник и эффект входа на сервер', 'Косметика сезона']::text[], 'unchecked', 3, true)
 on conflict (id) do nothing;
 

@@ -77,4 +77,8 @@ if command -v ufw >/dev/null && ufw status | grep -q "Status: active"; then ufw 
 IP="$(curl -fsS -m 5 https://api.ipify.org || hostname -I | awk '{print $1}')"
 echo
 echo "Готово. Сайт: http://$IP/"
-if [ ! -f "$APP/.env" ]; then echo "Режим: ДЕМО (нет $APP/.env)."; fi
+if [ ! -f "$APP/.env" ]; then
+  echo "Режим: ДЕМО (нет $APP/.env). Данные хранятся в браузере посетителя."
+  echo "Кабинет игрока: http://$IP/login — кнопка «Войти как демо-игрок»."
+  echo "Админка: owner@example.org / demo-owner-pass."
+fi

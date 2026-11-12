@@ -69,7 +69,7 @@ export interface Backend {
   listAudit(): Promise<AuditEntry[]>;
 
   // ---------- кабинет: образ, валюта, магазин, привилегии ----------
-  /** Доступны ли магазин и баланс. В этой версии серверной части у них нет: работают только в демо. */
+  /** Доступны ли магазин и баланс: интерфейс прячет их разделы там, где серверной части нет. */
   readonly shop: boolean;
   setAvatarStyle(style: Account['avatar_style']): Promise<void>;
   listProducts(includeUnpublished?: boolean): Promise<Product[]>;

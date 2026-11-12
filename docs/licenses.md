@@ -13,7 +13,7 @@
 | date-fns, date-fns-tz | 4.4.0, 3.2.0 | npm | MIT | |
 | Phosphor Icons (`@phosphor-icons/react`) | 2.1.10 | npm | MIT | Иконки |
 | three.js (`three`) | 0.170 | npm | MIT | Сцены первого экрана, грузится отдельным файлом |
-| Magic UI — `marquee`, `number-ticker`, `animated-beam`, `border-beam`, `blur-fade`, `retro-grid`, `flickering-grid`, `grid-pattern`, `magic-card` | коммит 039352a | github.com/magicuidesign/magicui, `apps/www/registry/magicui` | MIT | Файлы скопированы в `src/components/ui/` без правок: реестр shadcn из среды разработки недоступен |
+| Magic UI — `marquee`, `number-ticker`, `border-beam`, `blur-fade`, `particles`, `orbiting-circles`, `dot-pattern`, `animated-grid-pattern`, `scroll-progress` | коммит 039352a | github.com/magicuidesign/magicui, `apps/www/registry/magicui` | MIT | Файлы скопированы в `src/components/ui/` без правок: реестр shadcn из среды разработки недоступен |
 | Tailwind CSS, `@tailwindcss/vite` | 4.3.5 | npm | MIT | Нужен компонентам Magic UI; подключён по схеме слоёв из документации Astryx |
 | Motion (`motion`) | 14.13.0 | npm | MIT | Анимации компонентов Magic UI |
 | clsx, tailwind-merge | 2.1.1, 3.7.0 | npm | MIT | Утилита `cn` |
@@ -61,3 +61,10 @@
 содержит «Minecraft». Магазина нет, поэтому правила о продажах не затронуты. Живой текст раздела
 «Servers and hosting» в Minecraft Usage Guidelines **не сверялся**: minecraft.net из среды разработки
 недоступен. Сверьте его перед публикацией.
+
+## Картинки из блоков
+
+Миры на первом экране, куб аккаунта, островок с фонарём, лис, персонажи кабинета, иконки товаров и
+искра валюты собраны кодом из одноцветных кубиков (`src/scenes/`). Текстуры, модели и скины из игры и из
+модов не используются; названия модов в каталоге — только текст. Иконка товара показывает условный
+предмет, а не вид предмета в моде.

@@ -7,7 +7,7 @@ import {Button} from '@astryxdesign/core/Button';
  * Если файл не загрузился (обрыв связи, обновление сайта во время просмотра),
  * остальная страница продолжает работать, а на месте блока появляется «Повторить».
  */
-export class LazyBoundary extends Component<{children: ReactNode}, {failed: boolean}> {
+export class LazyBoundary extends Component<{children: ReactNode; silent?: boolean}, {failed: boolean}> {
   state = {failed: false};
 
   static getDerivedStateFromError() {
@@ -16,6 +16,8 @@ export class LazyBoundary extends Component<{children: ReactNode}, {failed: bool
 
   render() {
     if (!this.state.failed) return this.props.children;
+    // Украшение без смысловой нагрузки при сбое просто не показывается.
+    if (this.props.silent) return null;
     return (
       <section className="mc-page" aria-label="Ошибка загрузки">
         <Banner

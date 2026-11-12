@@ -41,9 +41,11 @@ export function Home() {
     <>
       <section className="mc-hero2" aria-labelledby="hero-title">
         {reduce ? null : (
-          <Suspense fallback={null}>
-            <HeroMotes />
-          </Suspense>
+          <LazyBoundary silent>
+            <Suspense fallback={null}>
+              <HeroMotes />
+            </Suspense>
+          </LazyBoundary>
         )}
         <VStack gap={6} hAlign="start" className="mc-hero2__copy">
           {total ? (

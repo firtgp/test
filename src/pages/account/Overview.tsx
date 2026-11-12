@@ -51,7 +51,7 @@ export function OverviewPage() {
       <span className="mc-ov">
         <span className="mc-ov__stage mc-edge">
           <span className="mc-ov__halo" aria-hidden="true" />
-          <LazyBoundary>
+          <LazyBoundary silent>
             <VoxelScene world={`character:${account.avatar_style}:${tier}`} stage className="mc-ov__scene" />
           </LazyBoundary>
           <span className="mc-ov__badge">
@@ -81,7 +81,7 @@ export function OverviewPage() {
             ))}
           </span>
           <p className="mc-ov__note">
-            Образ виден на сайте{backend.mode === 'supabase' ? ' и хранится в этом браузере' : ''}. Игровой скин он не меняет.
+            Образ виден на сайте. Игровой скин он не меняет.
           </p>
 
           <span className="mc-ov__cards">

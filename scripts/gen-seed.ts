@@ -4,10 +4,12 @@ import {writeFileSync} from 'node:fs';
 import {
   SETTINGS_KEY, seedMods, seedModpacks, seedNews, seedRules, seedServers, seedSettings,
 } from '../src/data/seed';
+import {seedProducts} from '../src/data/shopSeed';
 
 const q = (v: unknown): string => {
   if (v === null || v === undefined) return 'null';
   if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+  if (Array.isArray(v)) return v.length ? `array[${v.map(q).join(', ')}]::text[]` : `'{}'::text[]`;
   return `'${String(v).replace(/'/g, "''")}'`;
 };
 
@@ -30,6 +32,8 @@ const sql = [
   insert('servers', seedServers, 'id'),
   insert('news', seedNews, 'id'),
   insert('rules_versions', [seedRules], 'id'),
+  '-- Каталог-пример: названия, цены и бонусы условные. Перед включением оплаты сверьте товары с правилами Mojang.',
+  insert('products', seedProducts, 'id'),
   '',
 ].join('\n\n');
 
